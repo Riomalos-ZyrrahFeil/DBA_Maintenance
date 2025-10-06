@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Course Maintenance</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Course Maintenance</h1>
+
+    <!-- Course Form -->
+    <div class="form-container">
+      <input type="hidden" id="course_id">
+
+      <div class="form-row">
+        <label for="course_code">Course Code</label>
+        <input type="text" id="course_code">
+      </div>
+
+      <div class="form-row">
+        <label for="title">Title</label>
+        <input type="text" id="title">
+      </div>
+
+      <div class="form-row">
+        <label for="lecture_hours">Lecture Hours</label>
+        <input type="number" id="lecture_hours" min="0">
+      </div>
+
+      <div class="form-row">
+        <label for="lab_hours">Lab Hours</label>
+        <input type="number" id="lab_hours" min="0">
+      </div>
+
+      <div class="form-row">
+        <label for="units">Units</label>
+        <input type="number" id="units" min="0">
+      </div>
+
+      <div class="form-buttons">
+        <button id="saveBtn">Save</button>
+        <button id="updateBtn">Update</button>
+        <button id="cancelBtn">Cancel</button>
+      </div>
+    </div>
+
+    <!-- Search & Export -->
+    <div class="table-header">
+      <input type="text" id="search" placeholder="Search courses...">
+      <div class="export-buttons">
+        <button id="exportExcel">Export Excel</button>
+        <button id="exportPDF">Export PDF</button>
+      </div>
+    </div>
+
+    <!-- Course Table -->
+    <div class="table-container">
+      <table id="courseTable">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Course Code</th>
+            <th>Title</th>
+            <th>Lecture Hours</th>
+            <th>Lab Hours</th>
+            <th>Units</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Dynamic content here -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
