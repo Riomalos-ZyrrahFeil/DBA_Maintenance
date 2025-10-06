@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Term Maintenance</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Term Maintenance</h1>
+
+        <!-- Form -->
+        <div class="form-container">
+            <input type="hidden" id="term_id">
+            <div class="form-row">
+                <label for="term_code">Term Code</label>
+                <input type="text" id="term_code" placeholder="Enter Term Code">
+            </div>
+            <div class="form-row">
+                <label for="start_date">Start Date</label>
+                <input type="date" id="start_date">
+            </div>
+            <div class="form-row">
+                <label for="end_date">End Date</label>
+                <input type="date" id="end_date">
+            </div>
+            <div class="form-buttons">
+                <button id="saveBtn">Save</button>
+                <button id="updateBtn" style="display:none;">Update</button>
+                <button id="cancelBtn" style="display:none;">Cancel</button>
+            </div>
+        </div>
+
+        <!-- Search and export -->
+        <div class="table-actions">
+            <input type="text" id="searchInput" placeholder="Search Term">
+            <button id="exportExcel">Export Excel</button>
+            <button id="exportPDF">Export PDF</button>
+        </div>
+
+        <!-- Table -->
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Term ID</th>
+                        <th>Term Code</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="termTableBody">
+                    <!-- Dynamic content -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
