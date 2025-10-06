@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Program Maintenance</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Program Maintenance</h1>
+
+  <div class="form-container">
+    <input type="hidden" id="program_id">
+
+    <div class="form-row">
+      <input type="text" id="program_code" placeholder="Program Code">
+      <input type="text" id="program_name" placeholder="Program Name">
+      <select id="dept_id">
+        <option value="">Select Department</option>
+      </select>
+    </div>
+
+    <div class="form-row">
+      <button id="saveBtn">Save</button>
+      <button id="updateBtn">Update</button>
+      <button id="cancelBtn">Cancel</button>
+    </div>
+  </div>
+
+  <div class="actions">
+    <input type="text" id="search" placeholder="Search Program...">
+    <div>
+      <button id="exportExcel">Export Excel</button>
+      <button id="exportPDF">Export PDF</button>
+    </div>
+  </div>
+
+  <table id="programTable">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Program Code</th>
+        <th>Program Name</th>
+        <th>Department</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script src="script.js"></script>
+</body>
+</html>
