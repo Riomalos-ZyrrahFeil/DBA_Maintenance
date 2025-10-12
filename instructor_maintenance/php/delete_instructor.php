@@ -1,7 +1,7 @@
 <?php
 include '../../db.php';
 
-$instructor_id = $_POST['id'] ?? '';
+$instructor_id = $_POST['instructor_id'] ?? '';
 
 if($instructor_id){
     $stmt = $conn->prepare("DELETE FROM tbl_instructor WHERE instructor_id=?");
