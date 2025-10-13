@@ -184,6 +184,24 @@ tbody tr:hover {
     background-color: #b02a37;
 }
 
+#termTable thead th[data-column] {
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.2s ease;
+  position: relative;
+}
+
+#termTable thead th[data-column] .sort-arrow {
+  font-size: 0.8em;
+  margin-left: 5px;
+  color: inherit; /* arrow inherits th color */
+}
+
+#termTable thead th[data-column]:hover {
+  color: #007bff; /* text and arrow change on hover */
+}
+
+
 /* NO DATA MESSAGE */
 .no-data {
     text-align: center;

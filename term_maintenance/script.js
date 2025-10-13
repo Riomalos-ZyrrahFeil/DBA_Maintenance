@@ -210,3 +210,66 @@ function filterTable() {
     }
 }
 
+// Sort table by column
+document.querySelectorAll("th[data-column]").forEach(header => {
+    if (!header.hasAttribute("data-order")) header.setAttribute("data-order", "asc");
+
+    header.addEventListener("click", () => {
+        const column = header.getAttribute("data-column");
+        const order = header.getAttribute("data-order");
+
+        // Toggle order
+        const newOrder = order === "asc" ? "desc" : "asc";
+        header.setAttribute("data-order", newOrder);
+
+        // Reset all arrows
+        document.querySelectorAll("th[data-column]").forEach(th => {
+            th.classList.remove("sorted-asc", "sorted-desc");
+            const arrow = th.querySelector(".sort-arrow");
+            if (arrow) arrow.textContent = "↕";
+            if (th !== header) th.setAttribute("data-order", "asc");
+        });
+
+        // Set arrow for current header
+        header.classList.add(newOrder === "asc" ? "sorted-asc" : "sorted-desc");
+        const arrow = header.querySelector(".sort-arrow");
+        if (arrow) arrow.textContent = newOrder === "asc" ? "▲" : "▼";
+
+        sortTable(column, newOrder);
+    });
+});
+
+function sortTable(column, order) {
+    const tbody = document.getElementById("termTableBody");
+    const rows = Array.from(tbody.querySelectorAll("tr")).filter(r => !r.classList.contains("no-data"));
+
+    rows.sort((a, b) => {
+        let aText = a.querySelector(`td:nth-child(${getColumnIndex(column)})`).textContent;
+        let bText = b.querySelector(`td:nth-child(${getColumnIndex(column)})`).textContent;
+
+        // Convert term_id to number for proper sorting
+        if(column === "term_id") {
+            aText = parseInt(aText);
+            bText = parseInt(bText);
+        }
+
+        if(aText < bText) return order === "asc" ? -1 : 1;
+        if(aText > bText) return order === "asc" ? 1 : -1;
+        return 0;
+    });
+
+    // Re-append rows
+    rows.forEach(row => tbody.appendChild(row));
+}
+
+// Helper to map column name to td index (1-based)
+function getColumnIndex(column) {
+    switch(column) {
+        case "term_id": return 1;
+        case "term_code": return 2;
+        case "start_date": return 3;
+        case "end_date": return 4;
+        default: return 1;
+    }
+}
+
