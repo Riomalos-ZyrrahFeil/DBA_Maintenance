@@ -168,10 +168,40 @@ function deleteInstructor(id) {
   .then(res => res.json())
   .then(msg => {
     alert(msg.message);
-    loadInstructors();
+
+    if (msg.status === "success") {
+      // Remove the instructor from the local array
+      instructorList = instructorList.filter(instr => instr.instructor_id !== id);
+
+      // Re-render the table without the deleted instructor
+      const tbody = document.querySelector("#instructorTable tbody");
+      tbody.innerHTML = "";
+
+      if (instructorList.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="no-data">No instructors found</td></tr>`;
+      } else {
+        instructorList.forEach(instr => {
+          tbody.innerHTML += `
+            <tr>
+              <td>${instr.instructor_id}</td>
+              <td>${instr.first_name} ${instr.last_name}</td>
+              <td>${instr.email}</td>
+              <td>${instr.dept_name}</td>
+              <td>
+                <button class="action-btn edit-btn" onclick='editInstructor(${JSON.stringify(instr)})'>Edit</button>
+                <button class="action-btn delete-btn" onclick='deleteInstructor(${instr.instructor_id})'>🗑 Delete</button>
+              </td>
+            </tr>
+          `;
+        });
+      }
+
+      updateSortIndicators();
+    }
   })
   .catch(err => console.error("Error deleting instructor:", err));
 }
+
 
 // Clear form
 function clearForm() {
