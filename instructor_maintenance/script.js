@@ -5,21 +5,19 @@ document.addEventListener("DOMContentLoaded", () => {
   loadDepartments();
   loadInstructors();
 
-  document.getElementById("searchInput").addEventListener("keyup", searchInstructors);
-  document.getElementById("updateBtn").style.display = "none";
-  document.getElementById("saveBtn").style.display = "inline-block";
+  const saveBtn = document.getElementById("saveBtn");
+  const updateBtn = document.getElementById("updateBtn");
+  const cancelBtn = document.getElementById("cancelBtn");
+  const searchInput = document.getElementById("searchInput");
 
-  // Handle header click for sorting
-  document.querySelectorAll("#instructorTable thead th[data-column]").forEach((th) => {
+  searchInput.addEventListener("keyup", searchInstructors);
+
+  // Sorting headers
+  document.querySelectorAll("#instructorTable thead th[data-column]").forEach(th => {
     th.addEventListener("click", () => {
-      const column = th.getAttribute("data-column");
-      toggleSort(column);
+      toggleSort(th.getAttribute("data-column"));
     });
   });
-
-  // Export buttons
-  document.getElementById("exportExcel").addEventListener("click", exportExcel);
-  document.getElementById("exportPDF").addEventListener("click", exportPDF);
 });
 
 // Load Departments dynamically
@@ -82,7 +80,9 @@ async function loadInstructors(query = "") {
 }
 
 // Save Instructor
-function saveInstructor() {
+function saveInstructor(e) {
+  if(e) e.preventDefault(); // optional, won't hurt
+
   const payload = {
     last_name: document.getElementById("last_name").value.trim(),
     first_name: document.getElementById("first_name").value.trim(),
@@ -103,14 +103,17 @@ function saveInstructor() {
   .then(res => res.json())
   .then(msg => {
     alert(msg.message);
-    clearForm();
-    loadInstructors();
+    if(msg.status === "success") { // only clear and reload on success
+        clearForm();
+        loadInstructors();
+    }
   })
   .catch(err => console.error("Error saving instructor:", err));
 }
 
-// Update Instructor
-function updateInstructor() {
+function updateInstructor(e) {
+  if(e) e.preventDefault();
+
   const payload = {
     instructor_id: document.getElementById("instructor_id").value,
     last_name: document.getElementById("last_name").value.trim(),
@@ -132,8 +135,10 @@ function updateInstructor() {
   .then(res => res.json())
   .then(msg => {
     alert(msg.message);
-    clearForm();
-    loadInstructors();
+    if(msg.status === "success") {
+        clearForm();
+        loadInstructors();
+    }
   })
   .catch(err => console.error("Error updating instructor:", err));
 }
