@@ -187,3 +187,20 @@ footer {
   margin-top: auto;
   font-size: 0.9rem;
 }
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-right: 10px;
+}
+
+.form-group label {
+  font-weight: 600;
+  margin-bottom: 3px;
+  color: #333;
+}
+
+.search-label {
+  margin-right: 8px;
+  font-weight: 600;
+}
