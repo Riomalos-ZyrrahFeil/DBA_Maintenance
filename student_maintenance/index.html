@@ -39,31 +39,31 @@
 
     <!-- Separate Save and Update Buttons -->
     <div class="button-group">
-      <button id="saveBtn" type="button">💾 Save</button>
-      <button id="updateBtn" type="button" style="display:none;">✏️ Update</button>
-      <button type="button" onclick="clearForm()">🧹 Clear</button>
+      <button id="saveBtn" type="button">Save</button>
+      <button id="updateBtn" type="button" style="display:none;">Update</button>
+      <button type="button" onclick="clearForm()">Clear</button>
     </div>
   </div>
 
   <!-- Actions Section -->
   <div class="actions">
-    <input type="text" id="search" placeholder="🔍 Search by name or student no...">
-    <button type="button" onclick="exportExcel()">📊 Export Excel</button>
-    <button type="button" onclick="exportPDF()">📄 Export PDF</button>
+    <input type="text" id="search" placeholder="Search by name or student no...">
+    <button type="button" onclick="exportExcel()">Export Excel</button>
+    <button type="button" onclick="exportPDF()">Export PDF</button>
   </div>
 
   <!-- Table Section -->
   <table id="studentTable">
     <thead>
       <tr>
-        <th>ID</th>
-        <th>Student No.</th>
-        <th>Full Name</th>
-        <th>Email</th>
-        <th>Gender</th>
-        <th>Birthdate</th>
-        <th>Year Level</th>
-        <th>Program</th>
+        <th data-column="student_id">ID ↕</th>
+        <th data-column="student_no">Student No ↕</th>
+        <th data-column="student_name">Full Name ↕</th>
+        <th data-column="email">Email ↕</th>
+        <th data-column="gender">Gender ↕</th>
+        <th data-column="birthdate">Birthdate ↕</th>
+        <th data-column="year_level">Year Level ↕</th>
+        <th data-column="program_id">Program ↕</th>
         <th>Actions</th>
       </tr>
     </thead>

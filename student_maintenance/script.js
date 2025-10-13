@@ -1,18 +1,26 @@
 // =================== GLOBAL VARIABLES ===================
-let programList = []; // stores all programs from DB
+let programList = [];
+let studentList = [];
+let currentSort = { column: "student_id", direction: "asc" }; // default sorting
 
 // =================== ON PAGE LOAD ===================
 document.addEventListener("DOMContentLoaded", () => {
-  loadPrograms().then(() => {
-    loadStudents(); // load students only after programs are loaded
-  });
+  loadPrograms().then(() => loadStudents());
 
-  document.getElementById("updateBtn").style.display = "none"; // hide Update initially
-  document.getElementById("saveBtn").style.display = "inline-block"; // show Save
+  document.getElementById("updateBtn").style.display = "none";
+  document.getElementById("saveBtn").style.display = "inline-block";
 
   document.getElementById("saveBtn").addEventListener("click", addStudent);
   document.getElementById("updateBtn").addEventListener("click", updateStudent);
   document.getElementById("search").addEventListener("keyup", searchStudents);
+
+  // Enable sorting by clicking headers
+  document.querySelectorAll("#studentTable thead th[data-column]").forEach(th => {
+    th.addEventListener("click", () => {
+      const column = th.getAttribute("data-column");
+      toggleSort(column);
+    });
+  });
 });
 
 // =================== LOAD PROGRAMS ===================
@@ -20,7 +28,7 @@ async function loadPrograms() {
   try {
     const res = await fetch("../program_maintenance/php/fetch_program.php");
     const data = await res.json();
-    programList = data; // store for later use
+    programList = data;
 
     const select = document.getElementById("program_id");
     select.innerHTML = '<option value="">Select Program</option>';
@@ -37,34 +45,80 @@ async function loadPrograms() {
 }
 
 // =================== LOAD STUDENTS ===================
-function loadStudents(query = "") {
-  fetch(`php/fetch_student.php?search=${query}`)
-    .then(res => res.json())
-    .then(data => {
-      const tbody = document.querySelector("#studentTable tbody");
-      tbody.innerHTML = "";
+async function loadStudents(query = "") {
+  const sortBy = currentSort.column || "student_id";
+  const order = currentSort.direction || "asc";
 
-      data.forEach(stu => {
-        const programName = getProgramName(stu.program_id);
-        tbody.innerHTML += `
-          <tr>
-            <td>${stu.student_id}</td>
-            <td>${stu.student_no}</td>
-            <td>${stu.student_name}</td>
-            <td>${stu.email}</td>
-            <td>${stu.gender}</td>
-            <td>${stu.birthdate}</td>
-            <td>${stu.year_level}</td>
-            <td>${programName}</td>
-            <td>
-              <button class="edit-btn" onclick='editStudent(${JSON.stringify(stu)})'>Edit</button>
-              <button class="delete-btn" onclick='deleteStudent(${stu.student_id})'>Delete</button>
-            </td>
-          </tr>
-        `;
-      });
-    })
-    .catch(err => console.error("Error loading students:", err));
+  try {
+    const res = await fetch(
+      `php/get_student.php?search=${encodeURIComponent(query)}&sort_by=${sortBy}&order=${order}`
+    );
+    const data = await res.json();
+    studentList = data;
+
+    const tbody = document.querySelector("#studentTable tbody");
+    tbody.innerHTML = "";
+
+    if (!Array.isArray(data) || data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="9" class="no-data">No students found</td></tr>`;
+      updateSortIndicators();
+      return;
+    }
+
+    data.forEach(stu => {
+      const programName = getProgramName(stu.program_id);
+      tbody.innerHTML += `
+        <tr>
+          <td>${stu.student_id}</td>
+          <td>${stu.student_no}</td>
+          <td>${stu.student_name}</td>
+          <td>${stu.email}</td>
+          <td>${stu.gender}</td>
+          <td>${stu.birthdate}</td>
+          <td>${stu.year_level}</td>
+          <td>${programName}</td>
+          <td>
+            <button class="action-btn edit-btn" onclick='editStudent(${JSON.stringify(stu)})'>Edit</button>
+            <button class="action-btn delete-btn" onclick='deleteStudent(${stu.student_id})'>Delete</button>
+          </td>
+        </tr>
+      `;
+    });
+
+    updateSortIndicators();
+  } catch (err) {
+    console.error("Error loading students:", err);
+  }
+}
+
+// =================== SORT HANDLERS ===================
+function toggleSort(column) {
+  if (currentSort.column === column) {
+    currentSort.direction = currentSort.direction === "asc" ? "desc" : "asc";
+  } else {
+    currentSort.column = column;
+    currentSort.direction = "asc";
+  }
+
+  const query = document.getElementById("search").value.trim();
+  loadStudents(query);
+}
+
+function updateSortIndicators() {
+  document.querySelectorAll("#studentTable thead th[data-column]").forEach(th => {
+    const col = th.getAttribute("data-column");
+    const isActive = col === currentSort.column;
+    let label = th.getAttribute("data-label") || th.textContent.replace(/ ▲| ▼| ↕/g, "").trim();
+    th.setAttribute("data-label", label);
+
+    if (isActive) {
+      th.innerHTML = `${label} ${currentSort.direction === "asc" ? "▲" : "▼"}`;
+      th.classList.add("active-sort");
+    } else {
+      th.innerHTML = `${label} ↕`;
+      th.classList.remove("active-sort");
+    }
+  });
 }
 
 // =================== ADD STUDENT ===================
@@ -118,13 +172,10 @@ function editStudent(stu) {
   document.getElementById("student_id").value = stu.student_id;
   document.getElementById("student_no").value = stu.student_no || "";
 
-  // Split full name
   const nameParts = stu.student_name.split(" ");
   document.getElementById("first_name").value = nameParts[0] || "";
-  document.getElementById("middle_name").value =
-    nameParts.length === 3 ? nameParts[1] : "";
-  document.getElementById("last_name").value =
-    nameParts[nameParts.length - 1] || "";
+  document.getElementById("middle_name").value = nameParts.length === 3 ? nameParts[1] : "";
+  document.getElementById("last_name").value = nameParts[nameParts.length - 1] || "";
 
   document.getElementById("email").value = stu.email;
   document.getElementById("gender").value = stu.gender;
@@ -132,7 +183,6 @@ function editStudent(stu) {
   document.getElementById("year_level").value = stu.year_level;
   document.getElementById("program_id").value = stu.program_id;
 
-  // Toggle buttons
   document.getElementById("updateBtn").style.display = "inline-block";
   document.getElementById("saveBtn").style.display = "none";
 }
@@ -154,25 +204,23 @@ function deleteStudent(id) {
     .catch(err => console.error("Error deleting student:", err));
 }
 
-// =================== SEARCH STUDENTS ===================
+// =================== SEARCH ===================
 function searchStudents(e) {
-  loadStudents(e.target.value);
+  const query = e.target.value.trim();
+  loadStudents(query);
 }
 
 // =================== CLEAR FORM ===================
 function clearForm() {
   document.querySelectorAll("input, select").forEach(el => (el.value = ""));
   document.getElementById("student_id").value = "";
-
-  // Reset buttons
   document.getElementById("updateBtn").style.display = "none";
   document.getElementById("saveBtn").style.display = "inline-block";
 }
 
-// =================== HELPER: COLLECT FORM DATA ===================
+// =================== HELPER FUNCTIONS ===================
 function collectFormData() {
   const id = document.getElementById("student_id").value;
-
   const firstName = document.getElementById("first_name").value.trim();
   const middleName = document.getElementById("middle_name").value.trim();
   const lastName = document.getElementById("last_name").value.trim();
@@ -180,7 +228,7 @@ function collectFormData() {
 
   return {
     student_id: id,
-    student_no: document.getElementById("student_no").value.trim(), // ✅ NEW FIELD
+    student_no: document.getElementById("student_no").value.trim(),
     student_name: studentName,
     email: document.getElementById("email").value.trim(),
     gender: document.getElementById("gender").value,
@@ -190,7 +238,6 @@ function collectFormData() {
   };
 }
 
-// =================== HELPER: GET PROGRAM NAME ===================
 function getProgramName(id) {
   const program = programList.find(p => p.program_id == id);
   return program ? program.program_code : "Unknown";
