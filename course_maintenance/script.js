@@ -255,3 +255,11 @@ document.addEventListener("DOMContentLoaded", () => {
   // ==========================
   loadCourses();
 });
+
+function exportExcel() {
+  window.location.href = "php/export_excel.php";
+}
+
+function exportPDF() {
+  window.location.href = "php/export_pdf.php";
+}
