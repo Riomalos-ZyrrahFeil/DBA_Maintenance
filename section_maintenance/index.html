@@ -6,76 +6,19 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
+  <header>
     <h1>Section Maintenance</h1>
+  </header>
 
-    <!-- Form Section -->
-    <div class="form-container">
-      <input type="hidden" id="section_id">
-
-      <!-- Dropdowns for related tables -->
-      <div class="form-row">
-        <label for="course_id">Course</label>
-        <select id="course_id"></select>
-      </div>
-
-      <div class="form-row">
-        <label for="term_id">Term</label>
-        <select id="term_id"></select>
-      </div>
-
-      <div class="form-row">
-        <label for="instructor_id">Instructor</label>
-        <select id="instructor_id"></select>
-      </div>
-
-      <div class="form-row">
-        <label for="room_id">Room</label>
-        <select id="room_id"></select>
-      </div>
-
-      <div class="form-row">
-        <label for="section_code">Section Code</label>
-        <input type="text" id="section_code" placeholder="Enter Section Code">
-      </div>
-
-      <div class="form-row">
-        <label for="year">Year</label>
-        <input type="number" id="year" placeholder="Enter Year">
-      </div>
-
-      <div class="form-row">
-        <label for="day_pattern">Day Pattern</label>
-        <input type="text" id="day_pattern" placeholder="Enter Day Pattern">
-      </div>
-
-      <div class="form-row">
-        <label for="start_time">Start Time</label>
-        <input type="time" id="start_time">
-      </div>
-
-      <div class="form-row">
-        <label for="end_time">End Time</label>
-        <input type="time" id="end_time">
-      </div>
-
-      <div class="form-row">
-        <label for="max_capacity">Max Capacity</label>
-        <input type="number" id="max_capacity" placeholder="Enter Max Capacity">
-      </div>
-
-      <div class="form-buttons">
-        <button id="saveBtn">Save</button>
-        <button id="updateBtn">Update</button>
-        <button id="cancelBtn">Cancel</button>
-      </div>
-    </div>
-
+  <div class="container">
     <!-- Search and Export -->
     <div class="search-export">
       <input type="text" id="searchInput" placeholder="Search Sections">
-      <button id="exportExcel">Export Excel</button>
-      <button id="exportPDF">Export PDF</button>
+      <div class="export-buttons">
+        <button id="addSectionBtn">+ Add Section</button>
+        <button id="exportExcel">Export Excel</button>
+        <button id="exportPDF">Export PDF</button>
+      </div>
     </div>
 
     <!-- Table Section -->
@@ -103,6 +46,82 @@
       </table>
     </div>
   </div>
+
+  <!-- ===== MODAL FORM ===== -->
+  <div class="modal-overlay" id="sectionModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Add / Edit Section</h2>
+        <button class="close-modal" id="closeModal">&times;</button>
+      </div>
+
+      <div class="modal-content">
+        <div class="form-container">
+          <input type="hidden" id="section_id">
+
+          <div class="form-row">
+            <label for="course_id">Course</label>
+            <select id="course_id"></select>
+          </div>
+
+          <div class="form-row">
+            <label for="term_id">Term</label>
+            <select id="term_id"></select>
+          </div>
+
+          <div class="form-row">
+            <label for="instructor_id">Instructor</label>
+            <select id="instructor_id"></select>
+          </div>
+
+          <div class="form-row">
+            <label for="room_id">Room</label>
+            <select id="room_id"></select>
+          </div>
+
+          <div class="form-row">
+            <label for="section_code">Section Code</label>
+            <input type="text" id="section_code" placeholder="Enter Section Code">
+          </div>
+
+          <div class="form-row">
+            <label for="year">Year</label>
+            <input type="number" id="year" placeholder="Enter Year">
+          </div>
+
+          <div class="form-row">
+            <label for="day_pattern">Day Pattern</label>
+            <input type="text" id="day_pattern" placeholder="Enter Day Pattern">
+          </div>
+
+          <div class="form-row">
+            <label for="start_time">Start Time</label>
+            <input type="time" id="start_time">
+          </div>
+
+          <div class="form-row">
+            <label for="end_time">End Time</label>
+            <input type="time" id="end_time">
+          </div>
+
+          <div class="form-row">
+            <label for="max_capacity">Max Capacity</label>
+            <input type="number" id="max_capacity" placeholder="Enter Max Capacity">
+          </div>
+
+          <div class="form-buttons">
+            <button id="saveBtn">Save</button>
+            <button id="updateBtn">Update</button>
+            <button id="cancelBtn">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>&copy; 2025 PUP System — Section Maintenance</p>
+  </footer>
 
   <script src="script.js"></script>
 </body>

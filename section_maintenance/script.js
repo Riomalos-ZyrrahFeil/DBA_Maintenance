@@ -1,64 +1,104 @@
 // ===== Global Variables =====
 let sections = [];
+const modal = document.getElementById("sectionModal");
+const modalTitle = document.querySelector(".modal-header h2");
 
 // ===== On Page Load =====
 document.addEventListener("DOMContentLoaded", () => {
+  // Hide Update & Cancel buttons initially
   document.getElementById("updateBtn").style.display = "none";
   document.getElementById("cancelBtn").style.display = "none";
 
+  // Load data
   loadDropdowns();
   loadSections();
 
-  // Event Listeners
+  // ===== Event Listeners =====
   document.getElementById("saveBtn").addEventListener("click", saveSection);
   document.getElementById("updateBtn").addEventListener("click", updateSection);
-  document.getElementById("cancelBtn").addEventListener("click", resetForm);
+  document.getElementById("cancelBtn").addEventListener("click", () => {
+    resetForm();
+    closeModal();
+  });
+
   document.getElementById("searchInput").addEventListener("input", searchSections);
   document.getElementById("exportExcel").addEventListener("click", exportExcel);
   document.getElementById("exportPDF").addEventListener("click", exportPDF);
+
+  // Open modal for new section
+  document.getElementById("addSectionBtn").addEventListener("click", () => {
+    resetForm();
+    modalTitle.textContent = "Add Section";
+    openModal();
+  });
+
+  // Close modal
+  document.getElementById("closeModal").addEventListener("click", closeModal);
+  window.addEventListener("click", (e) => {
+    if (e.target === modal) closeModal();
+  });
 });
+
+// ===== Modal Control =====
+function openModal() {
+  modal.style.display = "flex";
+  modal.classList.add("show");
+  document.body.style.overflow = "hidden";
+}
+
+function closeModal() {
+  modal.classList.remove("show");
+  setTimeout(() => {
+    modal.style.display = "none";
+    document.body.style.overflow = "auto";
+  }, 150); // allow fade-out transition
+}
 
 // ===== Load Dropdown Data =====
 function loadDropdowns() {
-  fetch('php/fetch_course.php')
+  fetch("php/fetch_course.php")
     .then(res => res.json())
-    .then(data => populateDropdown('course_id', data, 'course_code'));
+    .then(data => populateDropdown("course_id", data, "course_code"));
 
-  fetch('php/fetch_term.php')
+  fetch("php/fetch_term.php")
     .then(res => res.json())
-    .then(data => populateDropdown('term_id', data, 'term_code'));
+    .then(data => populateDropdown("term_id", data, "term_code"));
 
-  fetch('php/fetch_instructor.php')
+  fetch("php/fetch_instructor.php")
     .then(res => res.json())
-    .then(data => populateDropdown('instructor_id', data, 'instructor_name'));
+    .then(data => populateDropdown("instructor_id", data, "instructor_name"));
 
-  fetch('php/fetch_room.php')
+  fetch("php/fetch_room.php")
     .then(res => res.json())
-    .then(data => populateDropdown('room_id', data, 'room_code'));
+    .then(data => populateDropdown("room_id", data, "room_code"));
 }
 
 // ===== Populate Dropdown Helper =====
-function populateDropdown(id, data, field1, field2='') {
+function populateDropdown(id, data, field1, field2 = "") {
   const select = document.getElementById(id);
   select.innerHTML = '<option value="">Select</option>';
   data.forEach(item => {
     const text = field2 ? `${item[field1]} - ${item[field2]}` : item[field1];
-    select.insertAdjacentHTML('beforeend', `<option value="${item[id.replace('_id','_id')]}">${text}</option>`);
+    const valueKey = Object.keys(item).find(k => k.endsWith("_id"));
+    select.insertAdjacentHTML(
+      "beforeend",
+      `<option value="${item[valueKey]}">${text}</option>`
+    );
   });
 }
 
 // ===== Load Sections =====
 function loadSections() {
-  fetch('php/get_section.php')
+  fetch("php/get_section.php")
     .then(res => res.json())
     .then(data => {
       sections = data;
       displaySections(sections);
     })
-    .catch(err => console.error('Error loading sections:', err));
+    .catch(err => console.error("Error loading sections:", err));
 }
 
-// ===== Display Sections in Table =====
+// ===== Display Sections =====
 function displaySections(list) {
   const tbody = document.querySelector("#sectionTable tbody");
   tbody.innerHTML = "";
@@ -86,25 +126,34 @@ function displaySections(list) {
   });
 }
 
-// ===== Form Actions =====
+// ===== Save Section =====
 function saveSection() {
   const data = getFormData();
-  fetch('php/add_section.php', {
-    method: 'POST',
-    body: JSON.stringify(data)
+
+  if (!data.section_code || !data.course_id) {
+    alert("Please fill out required fields.");
+    return;
+  }
+
+  fetch("php/add_section.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
   })
-  .then(res => res.json())
-  .then(resp => {
-    if(resp.status === 'success'){
-      loadSections();
-      resetForm();
-    } else {
-      alert('Error: ' + resp.message);
-    }
-  })
-  .catch(err => console.error('Error saving section:', err));
+    .then(res => res.json())
+    .then(resp => {
+      if (resp.status === "success") {
+        loadSections();
+        resetForm();
+        closeModal();
+      } else {
+        alert("Error: " + resp.message);
+      }
+    })
+    .catch(err => console.error("Error saving section:", err));
 }
 
+// ===== Edit Section =====
 function editSection(id) {
   const sec = sections.find(s => s.section_id == id);
   if (!sec) return;
@@ -124,52 +173,54 @@ function editSection(id) {
   document.getElementById("saveBtn").style.display = "none";
   document.getElementById("updateBtn").style.display = "inline-block";
   document.getElementById("cancelBtn").style.display = "inline-block";
+
+  modalTitle.textContent = "Edit Section";
+  openModal();
 }
 
+// ===== Update Section =====
 function updateSection() {
   const data = getFormData();
-  fetch('php/update_section.php', {
-    method: 'POST',
-    body: JSON.stringify(data)
+  fetch("php/update_section.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
   })
-  .then(res => res.json())
-  .then(resp => {
-    if(resp.status === 'success'){
-      loadSections();
-      resetForm();
-    } else {
-      alert('Error: ' + resp.message);
-    }
-  })
-  .catch(err => console.error('Error updating section:', err));
+    .then(res => res.json())
+    .then(resp => {
+      if (resp.status === "success") {
+        loadSections();
+        resetForm();
+        closeModal();
+      } else {
+        alert("Error: " + resp.message);
+      }
+    })
+    .catch(err => console.error("Error updating section:", err));
 }
 
+// ===== Delete Section =====
 function deleteSection(id) {
-  if(!confirm("Are you sure you want to delete this section?")) return;
+  if (!confirm("Are you sure you want to delete this section?")) return;
+
   fetch(`php/delete_section.php?id=${id}`)
     .then(res => res.json())
-    .then(resp => loadSections())
-    .catch(err => console.error('Error deleting section:', err));
+    .then(() => loadSections())
+    .catch(err => console.error("Error deleting section:", err));
 }
 
+// ===== Reset Form =====
 function resetForm() {
-  document.getElementById("section_id").value = "";
-  document.getElementById("section_code").value = "";
-  document.getElementById("year").value = "";
-  document.getElementById("day_pattern").value = "";
-  document.getElementById("start_time").value = "";
-  document.getElementById("end_time").value = "";
-  document.getElementById("max_capacity").value = "";
-  document.getElementById("course_id").value = "";
-  document.getElementById("term_id").value = "";
-  document.getElementById("instructor_id").value = "";
-  document.getElementById("room_id").value = "";
+  document.querySelectorAll("#sectionModal input, #sectionModal select").forEach(el => {
+    el.value = "";
+  });
 
   document.getElementById("saveBtn").style.display = "inline-block";
   document.getElementById("updateBtn").style.display = "none";
   document.getElementById("cancelBtn").style.display = "none";
 }
 
+// ===== Get Form Data =====
 function getFormData() {
   return {
     section_id: document.getElementById("section_id").value,
@@ -182,7 +233,7 @@ function getFormData() {
     day_pattern: document.getElementById("day_pattern").value,
     start_time: document.getElementById("start_time").value,
     end_time: document.getElementById("end_time").value,
-    max_capacity: document.getElementById("max_capacity").value
+    max_capacity: document.getElementById("max_capacity").value,
   };
 }
 
@@ -202,5 +253,10 @@ function searchSections() {
 }
 
 // ===== Export =====
-function exportExcel() { window.location.href='php/export_excel.php'; }
-function exportPDF() { window.location.href='php/export_pdf.php'; }
+function exportExcel() {
+  window.location.href = "php/export_excel.php";
+}
+
+function exportPDF() {
+  window.location.href = "php/export_pdf.php";
+}
