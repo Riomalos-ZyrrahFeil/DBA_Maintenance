@@ -13,6 +13,8 @@
     <input type="hidden" id="student_id">
 
     <div class="form-row">
+      <!-- Added Student Number -->
+      <input type="text" id="student_no" placeholder="Student No.">
       <input type="text" id="first_name" placeholder="First Name">
       <input type="text" id="middle_name" placeholder="Middle Name">
       <input type="text" id="last_name" placeholder="Last Name">
@@ -30,8 +32,6 @@
 
     <div class="form-row">
       <input type="text" id="year_level" placeholder="Year Level">
-      
-      <!-- Program Dropdown (Auto-filled from database) -->
       <select id="program_id">
         <option value="">Loading programs...</option>
       </select>
@@ -47,7 +47,7 @@
 
   <!-- Actions Section -->
   <div class="actions">
-    <input type="text" id="search" placeholder="🔍 Search by name...">
+    <input type="text" id="search" placeholder="🔍 Search by name or student no...">
     <button type="button" onclick="exportExcel()">📊 Export Excel</button>
     <button type="button" onclick="exportPDF()">📄 Export PDF</button>
   </div>
@@ -57,6 +57,7 @@
     <thead>
       <tr>
         <th>ID</th>
+        <th>Student No.</th>
         <th>Full Name</th>
         <th>Email</th>
         <th>Gender</th>

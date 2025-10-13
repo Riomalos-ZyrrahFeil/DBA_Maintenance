@@ -49,6 +49,7 @@ function loadStudents(query = "") {
         tbody.innerHTML += `
           <tr>
             <td>${stu.student_id}</td>
+            <td>${stu.student_no}</td>
             <td>${stu.student_name}</td>
             <td>${stu.email}</td>
             <td>${stu.gender}</td>
@@ -56,8 +57,8 @@ function loadStudents(query = "") {
             <td>${stu.year_level}</td>
             <td>${programName}</td>
             <td>
-              <button class="edit-btn" onclick='editStudent(${JSON.stringify(stu)})'>✏️ Edit</button>
-              <button class="delete-btn" onclick='deleteStudent(${stu.student_id})'>🗑 Delete</button>
+              <button class="edit-btn" onclick='editStudent(${JSON.stringify(stu)})'>Edit</button>
+              <button class="delete-btn" onclick='deleteStudent(${stu.student_id})'>Delete</button>
             </td>
           </tr>
         `;
@@ -115,6 +116,7 @@ function updateStudent() {
 // =================== EDIT STUDENT ===================
 function editStudent(stu) {
   document.getElementById("student_id").value = stu.student_id;
+  document.getElementById("student_no").value = stu.student_no || "";
 
   // Split full name
   const nameParts = stu.student_name.split(" ");
@@ -178,6 +180,7 @@ function collectFormData() {
 
   return {
     student_id: id,
+    student_no: document.getElementById("student_no").value.trim(), // ✅ NEW FIELD
     student_name: studentName,
     email: document.getElementById("email").value.trim(),
     gender: document.getElementById("gender").value,
