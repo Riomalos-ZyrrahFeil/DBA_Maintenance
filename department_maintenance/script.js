@@ -1,27 +1,30 @@
-// =================== GLOBAL VARIABLES ===================
 let departmentList = []; // stores all departments from DB
 
 // =================== ON PAGE LOAD ===================
 document.addEventListener("DOMContentLoaded", () => {
   loadDepartments();
 
+  document.getElementById("search").addEventListener("keyup", searchDepartments);
   document.getElementById("updateBtn").style.display = "none"; // hide Update initially
   document.getElementById("saveBtn").style.display = "inline-block"; // show Save
-
-  document.getElementById("saveBtn").addEventListener("click", saveDepartment);
-  document.getElementById("updateBtn").addEventListener("click", updateDepartment);
-  document.getElementById("search").addEventListener("keyup", searchDepartments);
 });
 
 // =================== LOAD DEPARTMENTS ===================
 async function loadDepartments(query = "") {
+  console.log("Loading departments with query:", query);
+
   try {
     const res = await fetch(`php/get_department.php?search=${encodeURIComponent(query)}`);
     const data = await res.json();
-    departmentList = data; // store globally
+    console.log("Data received:", data);
 
     const tbody = document.querySelector("#departmentTable tbody");
     tbody.innerHTML = "";
+
+    if (!Array.isArray(data) || data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">No departments found</td></tr>`;
+      return;
+    }
 
     data.forEach(dept => {
       tbody.innerHTML += `
@@ -30,7 +33,7 @@ async function loadDepartments(query = "") {
           <td>${dept.dept_code}</td>
           <td>${dept.dept_name}</td>
           <td>
-            <button class="action-btn edit-btn" onclick='editDepartment(${JSON.stringify(dept)})'>✏️ Edit</button>
+            <button class="action-btn edit-btn" onclick='editDepartment(${JSON.stringify(dept)})'>Edit</button>
             <button class="action-btn delete-btn" onclick='deleteDepartment(${dept.dept_id})'>🗑 Delete</button>
           </td>
         </tr>
@@ -119,6 +122,7 @@ function deleteDepartment(id) {
 
 // =================== SEARCH DEPARTMENTS ===================
 function searchDepartments(e) {
+  console.log("Search triggered:", e.target.value);
   loadDepartments(e.target.value);
 }
 
@@ -131,6 +135,12 @@ function clearForm() {
   document.getElementById("updateBtn").style.display = "none";
   document.getElementById("saveBtn").style.display = "inline-block";
 }
+
+// =================== CANCEL EDIT ===================
+function cancelEdit() {
+  clearForm();
+}
+
 
 // =================== EXPORT FUNCTIONS ===================
 function exportExcel() {

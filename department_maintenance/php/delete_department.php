@@ -5,11 +5,11 @@ include '../../db.php';
 
 // Read JSON input
 $data = json_decode(file_get_contents("php://input"), true);
-
 $id = $data['dept_id'] ?? '';
 
 if ($id) {
-    $stmt = $conn->prepare("DELETE FROM tbl_department WHERE dept_id=?");
+    // Soft delete instead of permanent delete
+    $stmt = $conn->prepare("UPDATE tbl_department SET is_deleted = 1 WHERE dept_id = ?");
     $stmt->bind_param("i", $id);
 
     if ($stmt->execute()) {
@@ -22,3 +22,6 @@ if ($id) {
 } else {
     echo json_encode(["status" => "error", "message" => "Invalid request."]);
 }
+
+$conn->close();
+?>
