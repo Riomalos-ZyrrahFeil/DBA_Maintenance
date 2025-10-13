@@ -62,9 +62,25 @@
     <div class="form-row">
       <div class="form-group">
         <label for="year_level">Year Level</label>
-        <input type="text" id="year_level" placeholder="Enter year level">
+        <select name="year_level" id="year_level" class="form-control" required>
+          <option value="" disabled selected>Select Year Level</option>
+          <option value="1-1">1-1</option>
+          <option value="1-2">1-2</option>
+          <option value="2-1">2-1</option>
+          <option value="2-2">2-2</option>
+          <option value="3-1">3-1</option>
+          <option value="3-2">3-2</option>
+          <option value="4-1">4-1</option>
+          <option value="4-2">4-2</option>
+        </select>
       </div>
-
+      <!-- <select name="year_level" id="year_level" class="form-control" required>
+        <option value="" disabled selected>Select Year Level</option>
+        <option value="1">1st Year</option>
+        <option value="2">2nd Year</option>
+        <option value="3">3rd Year</option>
+        <option value="4">4th Year</option>
+      </select> -->
       <div class="form-group">
         <label for="program_id">Program</label>
         <select id="program_id">
