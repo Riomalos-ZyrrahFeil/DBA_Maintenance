@@ -7,6 +7,27 @@ document.addEventListener("DOMContentLoaded", () => {
     const studentSelect = document.getElementById('student_id');
     const sectionSelect = document.getElementById('section_id');
 
+    // =================== Modal Elements ===================
+    const modal = document.getElementById('enrollmentModal');
+    const openModalBtn = document.getElementById('openModalBtn');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+
+    openModalBtn.addEventListener('click', () => {
+        modal.style.display = 'flex';
+    });
+
+    closeModalBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+        clearForm();
+    });
+
+    window.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.style.display = 'none';
+            clearForm();
+        }
+    });
+
     // =================== Load Students ===================
     function loadStudents() {
         fetch('php/fetch_students.php')
@@ -16,7 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 data.forEach(student => {
                     const option = document.createElement('option');
                     option.value = student.student_id;
-                    option.textContent = student.name;
+                    option.textContent = student.student_name;
                     studentSelect.appendChild(option);
                 });
             });
@@ -31,7 +52,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 data.forEach(section => {
                     const option = document.createElement('option');
                     option.value = section.section_id;
-                    option.textContent = section.section_code; // Make sure field name matches DB
+                    option.textContent = section.section_code;
                     sectionSelect.appendChild(option);
                 });
             })
@@ -83,6 +104,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }).then(() => {
             loadEnrollments();
             clearForm();
+            modal.style.display = 'none';
         });
     });
 
@@ -107,11 +129,15 @@ document.addEventListener("DOMContentLoaded", () => {
         }).then(() => {
             loadEnrollments();
             clearForm();
+            modal.style.display = 'none';
         });
     });
 
     // =================== Cancel ===================
-    cancelBtn.addEventListener('click', clearForm);
+    cancelBtn.addEventListener('click', () => {
+        clearForm();
+        modal.style.display = 'none';
+    });
 
     function clearForm() {
         document.getElementById('enrollment_id').value = '';
@@ -152,6 +178,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 saveBtn.style.display = 'none';
                 updateBtn.style.display = 'inline-block';
                 cancelBtn.style.display = 'inline-block';
+                modal.style.display = 'flex';
             });
     }
 
@@ -163,7 +190,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // =================== Export Buttons ===================
+    // =================== Export ===================
     document.getElementById('exportExcelBtn').addEventListener('click', () => {
         window.location.href = 'php/export_excel.php';
     });

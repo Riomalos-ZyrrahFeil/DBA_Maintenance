@@ -7,52 +7,19 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
+    <header>
         <h1>Enrollment Maintenance</h1>
+    </header>
 
-        <!-- Form Section -->
-        <div class="form-container">
-            <input type="hidden" id="enrollment_id">
-
-            <div class="form-row">
-                <label for="student_id">Student</label>
-                <select id="student_id">
-                    <option value="">Select Student</option>
-                </select>
-            </div>
-
-            <div class="form-row">
-                <label for="section_id">Section</label>
-                <select id="section_id">
-                    <option value="">Select Section</option>
-                </select>
-            </div>
-
-            <div class="form-row">
-                <label for="date_enrolled">Date Enrolled</label>
-                <input type="date" id="date_enrolled">
-            </div>
-            <div class="form-row">
-                <label for="status">Status</label>
-                <input type="text" id="status" placeholder="e.g. Active">
-            </div>
-            <div class="form-row">
-                <label for="letter_grade">Letter Grade</label>
-                <input type="text" id="letter_grade" placeholder="e.g. A">
-            </div>
-
-            <div class="form-buttons">
-                <button id="saveBtn">Save</button>
-                <button id="updateBtn" style="display:none;">Update</button>
-                <button id="cancelBtn" style="display:none;">Cancel</button>
-            </div>
-        </div>
-
-        <!-- Search and Export -->
+    <div class="container">
+        <!-- Table Controls -->
         <div class="table-controls">
             <input type="text" id="searchInput" placeholder="Search enrollments...">
-            <button id="exportExcelBtn">Export Excel</button>
-            <button id="exportPdfBtn">Export PDF</button>
+            <div>
+                <button id="openModalBtn">+ Add Enrollment</button>
+                <button id="exportExcelBtn">Export Excel</button>
+                <button id="exportPdfBtn">Export PDF</button>
+            </div>
         </div>
 
         <!-- Enrollment Table -->
@@ -61,8 +28,8 @@
                 <thead>
                     <tr>
                         <th>Enrollment ID</th>
-                        <th>Student ID</th>
-                        <th>Section ID</th>
+                        <th>Student</th>
+                        <th>Section</th>
                         <th>Date Enrolled</th>
                         <th>Status</th>
                         <th>Letter Grade</th>
@@ -75,6 +42,59 @@
             </table>
         </div>
     </div>
+
+    <!-- MODAL -->
+    <div class="modal" id="enrollmentModal">
+        <div class="modal-content">
+            <span class="close-modal" id="closeModalBtn">&times;</span>
+            <div class="form-container">
+                <h2>Enrollment Form</h2>
+                <input type="hidden" id="enrollment_id">
+
+                <div class="form-row">
+                    <label for="student_id">Student</label>
+                    <select id="student_id">
+                        <option value="">Select Student</option>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <label for="section_id">Section</label>
+                    <select id="section_id">
+                        <option value="">Select Section</option>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <label for="date_enrolled">Date Enrolled</label>
+                    <input type="date" id="date_enrolled">
+                </div>
+                <div class="form-row">
+                    <label for="status">Status</label>
+                        <select id="status">
+                            <option value="">Select Status</option>
+                            <option value="Enrolled">Enrolled</option>
+                            <option value="Dropped">Dropped</option>
+                            <option value="Completed">Completed</option>
+                        </select>
+                </div>
+                <div class="form-row">
+                    <label for="letter_grade">Letter Grade</label>
+                    <input type="text" id="letter_grade" placeholder="e.g. A">
+                </div>
+
+                <div class="form-buttons">
+                    <button id="saveBtn">Save</button>
+                    <button id="updateBtn" style="display:none;">Update</button>
+                    <button id="cancelBtn" style="display:none;">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2025 Enrollment Maintenance System</p>
+    </footer>
 
     <script src="script.js"></script>
 </body>
