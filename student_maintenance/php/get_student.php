@@ -19,8 +19,8 @@ if (!in_array($sort_by, $allowed_sort_columns)) {
 }
 
 if ($student_id) {
-  // ✅ Fetch a single student by ID
-  $sql = "SELECT * FROM tbl_student WHERE student_id = ?";
+  // ✅ Fetch a single student by ID (skip deleted ones)
+  $sql = "SELECT * FROM tbl_student WHERE student_id = ? AND is_deleted = 0";
   $stmt = $conn->prepare($sql);
   $stmt->bind_param("i", $student_id);
   $stmt->execute();
@@ -31,17 +31,19 @@ if ($student_id) {
   exit;
 }
 
-// ✅ Fetch all students (search by name or student_no)
+// ✅ Fetch all students (skip deleted ones)
 if ($search !== '') {
   $sql = "SELECT * FROM tbl_student 
-          WHERE student_name LIKE ? 
-             OR student_no LIKE ?
+          WHERE is_deleted = 0
+            AND (student_name LIKE ? OR student_no LIKE ?)
           ORDER BY $sort_by $order";
   $stmt = $conn->prepare($sql);
   $search_term = "%$search%";
   $stmt->bind_param("ss", $search_term, $search_term);
 } else {
-  $sql = "SELECT * FROM tbl_student ORDER BY $sort_by $order";
+  $sql = "SELECT * FROM tbl_student 
+          WHERE is_deleted = 0
+          ORDER BY $sort_by $order";
   $stmt = $conn->prepare($sql);
 }
 

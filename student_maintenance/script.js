@@ -1,7 +1,7 @@
 // =================== GLOBAL VARIABLES ===================
 let programList = [];
 let studentList = [];
-let currentSort = { column: "student_id", direction: "asc" }; // default sorting
+let currentSort = { column: "student_id", direction: "desc" }; // default sorting
 
 // =================== ON PAGE LOAD ===================
 document.addEventListener("DOMContentLoaded", () => {
