@@ -10,7 +10,7 @@
     <div class="container">
         <h1>Instructor Maintenance</h1>
 
-        <!-- Form Section -->
+        <!-- Instructor Form -->
         <div class="form-container">
             <input type="hidden" id="instructor_id">
 
@@ -33,36 +33,37 @@
                     <!-- Options populated dynamically -->
                 </select>
             </div>
+
             <div class="form-buttons">
-                <button id="saveBtn">Save</button>
-                <button id="updateBtn">Update</button>
-                <button id="cancelBtn">Cancel</button>
+                <button id="saveBtn" onclick="saveInstructor()">Save</button>
+                <button id="updateBtn" class="hidden" onclick="updateInstructor()">Update</button>
+                <button id="cancelBtn" onclick="cancelEdit()">Cancel</button>
             </div>
         </div>
 
         <!-- Search and Export -->
-        <div class="table-controls">
+        <div class="search-export">
             <input type="text" id="searchInput" placeholder="Search instructors...">
             <div class="export-buttons">
-                <button id="exportExcel">Export Excel</button>
-                <button id="exportPDF">Export PDF</button>
+                <button onclick="exportExcel()">Export Excel</button>
+                <button onclick="exportPDF()">Export PDF</button>
             </div>
         </div>
 
-        <!-- Table Section -->
+        <!-- Instructor Table -->
         <div class="table-container">
             <table id="instructorTable">
                 <thead>
                     <tr>
-                        <th>Instructor ID</th>
-                        <th>Full Name</th>
-                        <th>Email</th>
-                        <th>Department</th>
+                        <th data-column="instructor_id">Instructor ID</th>
+                        <th data-column="full_name">Full Name</th>
+                        <th data-column="email">Email</th>
+                        <th data-column="department">Department</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <!-- Rows populated dynamically via script.js -->
+                    <!-- Rows populated dynamically -->
                 </tbody>
             </table>
         </div>

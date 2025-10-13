@@ -13,11 +13,11 @@ if($last_name && $first_name && $email && $dept_id){
     $stmt->bind_param("sssi", $last_name, $first_name, $email, $dept_id);
     if($stmt->execute()){
         echo json_encode(['status'=> 'success', 'message'=> 'Instructor added successfully']);
-    }else{
+    } else {
         echo json_encode(['status'=> 'error', 'message'=> 'Failed to add instructor']);
     }
     $stmt->close();
-}else{
+} else {
     echo json_encode(['status'=> 'error', 'message'=> 'All fields are required']);
 }
 ?>
