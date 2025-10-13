@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Course Prerequisite Maintenance</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+    <h1>Course Prerequisite Maintenance</h1>
+
+    <!-- Form -->
+    <div class="form-container">
+        <input type="hidden" id="original_course_id">
+        <input type="hidden" id="original_prereq_id">
+
+        <div class="form-row">
+            <label for="course_id">Course</label>
+            <select id="course_id"></select>
+        </div>
+
+        <div class="form-row">
+            <label for="prereq_course_id">Prerequisite Course</label>
+            <select id="prereq_course_id"></select>
+        </div>
+
+        <div class="form-buttons">
+            <button id="saveBtn">Save</button>
+            <button id="updateBtn" style="display:none;">Update</button>
+            <button id="cancelBtn">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Search and Export -->
+    <div class="table-actions search-export">
+        <input type="text" id="searchInput" placeholder="Search course code or prerequisite">
+        <div class="export-buttons">
+            <button id="exportExcel">Export Excel</button>
+            <button id="exportPDF">Export PDF</button>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-container">
+        <table id="coursePrereqTable">
+            <thead>
+            <tr>
+                <th data-column="course_code">Course Code <span class="sort-arrow">↕</span></th>
+                <th data-column="course_name">Course Name <span class="sort-arrow">↕</span></th>
+                <th data-column="prereq_code">Prerequisite Code <span class="sort-arrow">↕</span></th>
+                <th data-column="prereq_name">Prerequisite Name <span class="sort-arrow">↕</span></th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody id="coursePrereqTableBody">
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

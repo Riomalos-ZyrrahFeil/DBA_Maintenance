@@ -1,0 +1,64 @@
+<?php
+include '../../db.php';
+header('Content-Type: application/json');
+
+$course_id = isset($_GET['course_id']) ? $_GET['course_id'] : null;
+
+try {
+    if ($course_id) {
+        // ✅ Get prerequisites for a specific course
+        $stmt = $conn->prepare("
+            SELECT 
+                cp.course_id,
+                cp.prerequisite_course_id,
+                c1.title AS course_title,
+                c2.title AS prerequisite_title
+            FROM tbl_course_prerequisite cp
+            INNER JOIN tbl_course c1 ON cp.course_id = c1.course_id
+            INNER JOIN tbl_course c2 ON cp.prerequisite_course_id = c2.course_id
+            WHERE cp.course_id = ? 
+            AND (cp.is_deleted = 0 OR cp.is_deleted IS NULL)
+            ORDER BY cp.course_id DESC
+        ");
+        $stmt->bind_param("i", $course_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $prerequisites = [];
+        while ($row = $result->fetch_assoc()) {
+            $prerequisites[] = $row;
+        }
+
+        echo json_encode($prerequisites);
+        $stmt->close();
+    } else {
+        // ✅ Get all prerequisites
+        $query = "
+            SELECT 
+                cp.course_id,
+                cp.prerequisite_course_id,
+                c1.title AS course_title,
+                c2.title AS prerequisite_title
+            FROM tbl_course_prerequisite cp
+            INNER JOIN tbl_course c1 ON cp.course_id = c1.course_id
+            INNER JOIN tbl_course c2 ON cp.prerequisite_course_id = c2.course_id
+            WHERE cp.is_deleted = 0 OR cp.is_deleted IS NULL
+            ORDER BY cp.course_id DESC
+        ";
+
+        $result = $conn->query($query);
+        $prerequisites = [];
+
+        while ($row = $result->fetch_assoc()) {
+            $prerequisites[] = $row;
+        }
+
+        echo json_encode($prerequisites);
+    }
+} catch (Exception $e) {
+    echo json_encode([
+        "status" => "error",
+        "message" => "Server error: " . $e->getMessage()
+    ]);
+}
+?>
