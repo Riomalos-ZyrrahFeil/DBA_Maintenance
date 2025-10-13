@@ -4,6 +4,7 @@ let currentSort = { column: "course_id", direction: "asc" };
 document.addEventListener("DOMContentLoaded", () => {
   const courseTableBody = document.querySelector("#courseTable tbody");
   const searchInput = document.getElementById("search");
+  let currentSort = { column: "course_id", direction: "desc" };
 
   const saveBtn = document.getElementById("saveBtn");
   const updateBtn = document.getElementById("updateBtn");
