@@ -15,7 +15,7 @@ $pdf->SetAutoPageBreak(TRUE, 20);
 $pdf->AddPage();
 
 // University header
-$today = date("F d, Y H:i");
+$today = date("F d, Y");
 $header = <<<EOD
 <h2 style="text-align:center; color:#800000;">Polytechnic University of the Philippines - Taguig Campus</h2>
 <p style="text-align:center;">Date Created: $today</p>
