@@ -12,10 +12,12 @@ if (!in_array($sort_by, $allowed_columns)) {
     $sort_by = 'program_id';
 }
 
+// Only select programs that are not soft deleted
 $sql = "SELECT p.program_id, p.program_code, p.program_name, p.dept_id, d.dept_name 
         FROM tbl_program p
         JOIN tbl_department d ON p.dept_id = d.dept_id
-        WHERE p.program_code LIKE ? OR p.program_name LIKE ? OR d.dept_name LIKE ?
+        WHERE (p.program_code LIKE ? OR p.program_name LIKE ? OR d.dept_name LIKE ?)
+          AND p.is_deleted = 0
         ORDER BY $sort_by $order";
 
 $stmt = $conn->prepare($sql);
