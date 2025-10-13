@@ -23,6 +23,14 @@ function loadTerms() {
         .then(data => {
             const tbody = document.getElementById("termTableBody");
             tbody.innerHTML = "";
+
+            if (data.length === 0) {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `<td colspan="5" class="no-data">No terms found</td>`;
+                tbody.appendChild(tr);
+                return;
+            }
+
             data.forEach(term => {
                 const tr = document.createElement("tr");
                 tr.innerHTML = `
@@ -31,8 +39,8 @@ function loadTerms() {
                     <td>${term.start_date}</td>
                     <td>${term.end_date}</td>
                     <td class="actions">
-                        <button onclick="editTerm(${term.term_id})">Edit</button>
-                        <button onclick="deleteTerm(${term.term_id})">Delete</button>
+                        <button class="edit-btn" onclick="editTerm(${term.term_id})">Edit</button>
+                        <button class="delete-btn" onclick="deleteTerm(${term.term_id})">Delete</button>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -64,13 +72,17 @@ function addTerm() {
     .then(res => res.json())
     .then(data => {
         if (data.status === "success") {
+            alert("Term added successfully!"); // ✅ Alert on success
             resetForm();
             loadTerms();
         } else {
-            alert("Error adding term: " + data.message);
+            alert("Error adding term: " + data.message); // ✅ Alert on error
         }
     })
-    .catch(err => console.error(err));
+    .catch(err => {
+        console.error(err);
+        alert("An unexpected error occurred while adding the term.");
+    });
 }
 
 // Populate form for editing
@@ -117,14 +129,19 @@ function updateTerm() {
     .then(res => res.json())
     .then(data => {
         if (data.status === "success") {
+            alert("Term updated successfully!"); // ✅ Alert on success
             resetForm();
             loadTerms();
         } else {
-            alert("Error updating term: " + data.message);
+            alert("Error updating term: " + data.message); // ✅ Alert on error
         }
     })
-    .catch(err => console.error(err));
+    .catch(err => {
+        console.error(err);
+        alert("An unexpected error occurred while updating the term.");
+    });
 }
+
 
 // Delete term
 function deleteTerm(id) {
@@ -157,16 +174,39 @@ function resetForm() {
 
     document.getElementById("saveBtn").style.display = "inline-block";
     document.getElementById("updateBtn").style.display = "none";
-    document.getElementById("cancelBtn").style.display = "none";
+    document.getElementById("cancelBtn").style.display = "inline-block";
 }
 
 // Search filter
 function filterTable() {
     const filter = document.getElementById("searchInput").value.toLowerCase();
-    const rows = document.querySelectorAll("#termTableBody tr");
+    const tbody = document.getElementById("termTableBody");
+    const rows = Array.from(tbody.querySelectorAll("tr"));
+    let hasVisible = false;
 
+    // Remove any existing no-data row first
+    rows.forEach(row => {
+        if (row.classList.contains("no-data")) {
+            row.remove();
+        }
+    });
+
+    // Filter rows
     rows.forEach(row => {
         const termCode = row.cells[1].textContent.toLowerCase();
-        row.style.display = termCode.includes(filter) ? "" : "none";
+        if (termCode.includes(filter)) {
+            row.style.display = "";
+            hasVisible = true;
+        } else {
+            row.style.display = "none";
+        }
     });
+
+    // If no rows are visible, show "No terms found"
+    if (!hasVisible) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td colspan="5" class="no-data">No terms found</td>`;
+        tbody.appendChild(tr);
+    }
 }
+
