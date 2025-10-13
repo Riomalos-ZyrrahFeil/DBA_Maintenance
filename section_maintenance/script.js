@@ -3,74 +3,15 @@ let sections = [];
 const modal = document.getElementById("sectionModal");
 const modalTitle = document.querySelector(".modal-header h2");
 
-// ===== On Page Load =====
-document.addEventListener("DOMContentLoaded", () => {
-  // Hide Update & Cancel buttons initially
-  document.getElementById("updateBtn").style.display = "none";
-  document.getElementById("cancelBtn").style.display = "none";
-
-  // Load data
-  loadDropdowns();
-  loadSections();
-
-  // ===== Event Listeners =====
-  document.getElementById("saveBtn").addEventListener("click", saveSection);
-  document.getElementById("updateBtn").addEventListener("click", updateSection);
-  document.getElementById("cancelBtn").addEventListener("click", () => {
-    resetForm();
-    closeModal();
-  });
-
-  document.getElementById("searchInput").addEventListener("input", searchSections);
-  document.getElementById("exportExcel").addEventListener("click", exportExcel);
-  document.getElementById("exportPDF").addEventListener("click", exportPDF);
-
-  // Open modal for new section
-  document.getElementById("addSectionBtn").addEventListener("click", () => {
-    resetForm();
-    modalTitle.textContent = "Add Section";
-    openModal();
-  });
-
-  // Close modal
-  document.getElementById("closeModal").addEventListener("click", closeModal);
-  window.addEventListener("click", (e) => {
-    if (e.target === modal) closeModal();
-  });
-});
-
 // ===== Modal Control =====
 function openModal() {
   modal.style.display = "flex";
-  modal.classList.add("show");
   document.body.style.overflow = "hidden";
 }
 
 function closeModal() {
-  modal.classList.remove("show");
-  setTimeout(() => {
-    modal.style.display = "none";
-    document.body.style.overflow = "auto";
-  }, 150); // allow fade-out transition
-}
-
-// ===== Load Dropdown Data =====
-function loadDropdowns() {
-  fetch("php/fetch_course.php")
-    .then(res => res.json())
-    .then(data => populateDropdown("course_id", data, "course_code"));
-
-  fetch("php/fetch_term.php")
-    .then(res => res.json())
-    .then(data => populateDropdown("term_id", data, "term_code"));
-
-  fetch("php/fetch_instructor.php")
-    .then(res => res.json())
-    .then(data => populateDropdown("instructor_id", data, "instructor_name"));
-
-  fetch("php/fetch_room.php")
-    .then(res => res.json())
-    .then(data => populateDropdown("room_id", data, "room_code"));
+  modal.style.display = "none";
+  document.body.style.overflow = "auto";
 }
 
 // ===== Populate Dropdown Helper =====
@@ -87,6 +28,29 @@ function populateDropdown(id, data, field1, field2 = "") {
   });
 }
 
+// ===== Load Dropdown Data =====
+function loadDropdowns() {
+  fetch("php/fetch_course.php")
+    .then(res => res.json())
+    .then(data => populateDropdown("course_id", data, "course_code"))
+    .catch(() => alert("⚠️ Failed to load course data."));
+
+  fetch("php/fetch_term.php")
+    .then(res => res.json())
+    .then(data => populateDropdown("term_id", data, "term_code"))
+    .catch(() => alert("⚠️ Failed to load term data."));
+
+  fetch("php/fetch_instructor.php")
+    .then(res => res.json())
+    .then(data => populateDropdown("instructor_id", data, "instructor_name"))
+    .catch(() => alert("⚠️ Failed to load instructor data."));
+
+  fetch("php/fetch_room.php")
+    .then(res => res.json())
+    .then(data => populateDropdown("room_id", data, "room_code"))
+    .catch(() => alert("⚠️ Failed to load room data."));
+}
+
 // ===== Load Sections =====
 function loadSections() {
   fetch("php/get_section.php")
@@ -95,7 +59,7 @@ function loadSections() {
       sections = data;
       displaySections(sections);
     })
-    .catch(err => console.error("Error loading sections:", err));
+    .catch(() => alert("⚠️ Failed to load sections. Please refresh the page."));
 }
 
 // ===== Display Sections =====
@@ -126,14 +90,47 @@ function displaySections(list) {
   });
 }
 
+// ===== Get Form Data =====
+function getFormData() {
+  return {
+    section_id: document.getElementById("section_id").value,
+    course_id: document.getElementById("course_id").value,
+    term_id: document.getElementById("term_id").value,
+    instructor_id: document.getElementById("instructor_id").value,
+    room_id: document.getElementById("room_id").value,
+    section_code: document.getElementById("section_code").value,
+    year: document.getElementById("year").value,
+    day_pattern: document.getElementById("day_pattern").value,
+    start_time: document.getElementById("start_time").value,
+    end_time: document.getElementById("end_time").value,
+    max_capacity: document.getElementById("max_capacity").value,
+  };
+}
+
+// ===== Reset Form =====
+function resetForm() {
+  document.querySelectorAll("#sectionModal input, #sectionModal select").forEach(el => el.value = "");
+  document.getElementById("saveBtn").style.display = "inline-block";
+  document.getElementById("updateBtn").style.display = "none";
+  document.getElementById("cancelBtn").style.display = "none";
+}
+
+// ===== Validate Form =====
+function validateForm(data) {
+  const requiredFields = ["course_id", "term_id", "instructor_id", "room_id", "section_code", "year", "day_pattern", "start_time", "end_time", "max_capacity"];
+  for (const field of requiredFields) {
+    if (!data[field]) {
+      alert("⚠️ Please fill in all required fields before saving.");
+      return false;
+    }
+  }
+  return true;
+}
+
 // ===== Save Section =====
 function saveSection() {
   const data = getFormData();
-
-  if (!data.section_code || !data.course_id) {
-    alert("Please fill out required fields.");
-    return;
-  }
+  if (!validateForm(data)) return;
 
   fetch("php/add_section.php", {
     method: "POST",
@@ -143,14 +140,15 @@ function saveSection() {
     .then(res => res.json())
     .then(resp => {
       if (resp.status === "success") {
+        alert("✅ Section added successfully!");
         loadSections();
         resetForm();
         closeModal();
       } else {
-        alert("Error: " + resp.message);
+        alert("⚠️ Error adding section: " + resp.message);
       }
     })
-    .catch(err => console.error("Error saving section:", err));
+    .catch(() => alert("⚠️ Failed to add section. Please try again later."));
 }
 
 // ===== Edit Section =====
@@ -181,6 +179,8 @@ function editSection(id) {
 // ===== Update Section =====
 function updateSection() {
   const data = getFormData();
+  if (!validateForm(data)) return;
+
   fetch("php/update_section.php", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -189,55 +189,35 @@ function updateSection() {
     .then(res => res.json())
     .then(resp => {
       if (resp.status === "success") {
+        alert("✅ Section updated successfully!");
         loadSections();
         resetForm();
         closeModal();
       } else {
-        alert("Error: " + resp.message);
+        alert("⚠️ Error updating section: " + resp.message);
       }
     })
-    .catch(err => console.error("Error updating section:", err));
+    .catch(() => alert("⚠️ Failed to update section. Please try again later."));
 }
 
 // ===== Delete Section =====
 function deleteSection(id) {
-  if (!confirm("Are you sure you want to delete this section?")) return;
+  if (!confirm("🗑️ Are you sure you want to delete this section?")) return;
 
   fetch(`php/delete_section.php?id=${id}`)
     .then(res => res.json())
-    .then(() => loadSections())
-    .catch(err => console.error("Error deleting section:", err));
+    .then(resp => {
+      if (resp.status === "success") {
+        alert("✅ Section deleted successfully!");
+        loadSections();
+      } else {
+        alert("⚠️ Error deleting section: " + resp.message);
+      }
+    })
+    .catch(() => alert("⚠️ Failed to delete section. Please try again later."));
 }
 
-// ===== Reset Form =====
-function resetForm() {
-  document.querySelectorAll("#sectionModal input, #sectionModal select").forEach(el => {
-    el.value = "";
-  });
-
-  document.getElementById("saveBtn").style.display = "inline-block";
-  document.getElementById("updateBtn").style.display = "none";
-  document.getElementById("cancelBtn").style.display = "none";
-}
-
-// ===== Get Form Data =====
-function getFormData() {
-  return {
-    section_id: document.getElementById("section_id").value,
-    course_id: document.getElementById("course_id").value,
-    term_id: document.getElementById("term_id").value,
-    instructor_id: document.getElementById("instructor_id").value,
-    room_id: document.getElementById("room_id").value,
-    section_code: document.getElementById("section_code").value,
-    year: document.getElementById("year").value,
-    day_pattern: document.getElementById("day_pattern").value,
-    start_time: document.getElementById("start_time").value,
-    end_time: document.getElementById("end_time").value,
-    max_capacity: document.getElementById("max_capacity").value,
-  };
-}
-
-// ===== Search =====
+// ===== Search Sections =====
 function searchSections() {
   const query = document.getElementById("searchInput").value.toLowerCase();
   const filtered = sections.filter(sec =>
@@ -253,10 +233,27 @@ function searchSections() {
 }
 
 // ===== Export =====
-function exportExcel() {
-  window.location.href = "php/export_excel.php";
-}
+function exportExcel() { window.location.href = "php/export_excel.php"; }
+function exportPDF() { window.location.href = "php/export_pdf.php"; }
 
-function exportPDF() {
-  window.location.href = "php/export_pdf.php";
-}
+// ===== On Page Load =====
+document.addEventListener("DOMContentLoaded", () => {
+  // Hide Update & Cancel buttons
+  document.getElementById("updateBtn").style.display = "none";
+  document.getElementById("cancelBtn").style.display = "none";
+
+  // Load dropdowns and sections
+  loadDropdowns();
+  loadSections();
+
+  // Event listeners
+  document.getElementById("saveBtn").addEventListener("click", saveSection);
+  document.getElementById("updateBtn").addEventListener("click", updateSection);
+  document.getElementById("cancelBtn").addEventListener("click", () => { resetForm(); closeModal(); });
+  document.getElementById("searchInput").addEventListener("input", searchSections);
+  document.getElementById("exportExcel").addEventListener("click", exportExcel);
+  document.getElementById("exportPDF").addEventListener("click", exportPDF);
+  document.getElementById("addSectionBtn").addEventListener("click", () => { resetForm(); modalTitle.textContent = "Add Section"; openModal(); });
+  document.getElementById("closeModal").addEventListener("click", closeModal);
+  window.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+});
