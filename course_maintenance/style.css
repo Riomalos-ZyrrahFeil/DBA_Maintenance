@@ -96,8 +96,7 @@ h1 {
 }
 
 /* Hide update/cancel by default */
-#updateBtn,
-#cancelBtn {
+#updateBtn{
   display: none;
 }
 

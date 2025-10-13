@@ -130,6 +130,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+// ADD COURSE
   saveBtn.addEventListener("click", () => {
     const formData = new FormData();
     formData.append("course_code", courseFormFields.course_code.value);
@@ -139,28 +140,40 @@ document.addEventListener("DOMContentLoaded", () => {
     formData.append("units", courseFormFields.units.value);
 
     fetch("php/add_course.php", { method: "POST", body: formData })
-      .then((res) => res.json())
-      .then(() => {
-        clearForm();
-        loadCourses();
-      });
+      .then(res => res.json())
+      .then(data => {
+        alert(data.message);
+        if (data.status === "success") {
+          clearForm();
+          loadCourses();
+        }
+      })
+      .catch(err => console.error("Error:", err));
   });
 
+  // UPDATE COURSE
   updateBtn.addEventListener("click", () => {
     const formData = new FormData();
-    formData.append("course_id", courseFormFields.course_id.value);
-    formData.append("course_code", courseFormFields.course_code.value);
-    formData.append("title", courseFormFields.title.value);
-    formData.append("lecture_hours", courseFormFields.lecture_hours.value);
-    formData.append("lab_hours", courseFormFields.lab_hours.value);
-    formData.append("units", courseFormFields.units.value);
+    formData.append("course_id", document.getElementById("course_id").value);
+    formData.append("course_code", document.getElementById("course_code").value);
+    formData.append("title", document.getElementById("title").value);
+    formData.append("lecture_hours", document.getElementById("lecture_hours").value);
+    formData.append("lab_hours", document.getElementById("lab_hours").value);
+    formData.append("units", document.getElementById("units").value);
 
-    fetch("php/update_course.php", { method: "POST", body: formData })
-      .then((res) => res.json())
-      .then(() => {
-        clearForm();
+    fetch("php/update_course.php", {
+      method: "POST",
+      body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+      alert(data.message);
+      if (data.status === "success") {
         loadCourses();
-      });
+        clearForm();
+      }
+    })
+    .catch(err => console.error("Error:", err));
   });
 
   cancelBtn.addEventListener("click", clearForm);
@@ -169,7 +182,7 @@ document.addEventListener("DOMContentLoaded", () => {
     Object.values(courseFormFields).forEach((field) => (field.value = ""));
     saveBtn.style.display = "inline-block";
     updateBtn.style.display = "none";
-    cancelBtn.style.display = "none";
+    cancelBtn.style.display = "inline-block";
   }
 
   // ==========================
