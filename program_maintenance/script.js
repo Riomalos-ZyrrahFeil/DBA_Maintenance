@@ -1,6 +1,6 @@
 let programList = [];
 let departmentList = [];
-let currentSort = { column: "program_id", direction: "decs" }; // default sorting
+let currentSort = { column: "program_id", direction: "desc" }; // default sorting
 
 document.addEventListener("DOMContentLoaded", () => {
   loadDepartments();  // load departments first
@@ -17,10 +17,6 @@ document.addEventListener("DOMContentLoaded", () => {
       toggleSort(column);
     });
   });
-
-  // Export buttons
-  document.getElementById("exportExcel").addEventListener("click", exportExcel);
-  document.getElementById("exportPDF").addEventListener("click", exportPDF);
 });
 
 // ==================== LOAD DEPARTMENTS ====================
@@ -69,7 +65,7 @@ async function loadPrograms(query = "") {
           <td>${p.program_name}</td>
           <td>${p.dept_name}</td>
           <td>
-            <button class="action-btn edit-btn" onclick='editProgram(${JSON.stringify(p)})'>Edit</button>
+            <button class="action-btn edit-btn" onclick='editProgram(${p.program_id})'>Edit</button>
             <button class="action-btn delete-btn" onclick='deleteProgram(${p.program_id})'>Delete</button>
           </td>
         </tr>
@@ -127,7 +123,10 @@ function updateProgram() {
 }
 
 // ==================== EDIT PROGRAM ====================
-function editProgram(p) {
+function editProgram(id) {
+  const p = programList.find(pr => pr.program_id == id);
+  if (!p) return;
+
   document.getElementById("program_id").value = p.program_id;
   document.getElementById("program_code").value = p.program_code;
   document.getElementById("program_name").value = p.program_name;
@@ -135,7 +134,9 @@ function editProgram(p) {
 
   document.getElementById("updateBtn").style.display = "inline-block";
   document.getElementById("saveBtn").style.display = "none";
+  document.getElementById("cancelBtn").style.display = "inline-block";
 }
+
 
 // ==================== DELETE PROGRAM ====================
 function deleteProgram(id) {

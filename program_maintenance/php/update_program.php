@@ -9,7 +9,7 @@ $code = trim($data['program_code'] ?? '');
 $name = trim($data['program_name'] ?? '');
 $dept = $data['dept_id'] ?? '';
 
-if (!$id || !$code || !$name || !$dept) {
+if ($id === '' || $code === '' || $name === '' || $dept === '') {
     echo json_encode(["status" => "error", "message" => "Missing fields!"]);
     exit;
 }
