@@ -1,27 +1,63 @@
 <?php
 include '../../db.php';
-require('fpdf.php');
+require_once('../../tcpdf/TCPDF-6.10.0/TCPDF-6.10.0/tcpdf.php'); // Adjust path if needed
 
-$pdf = new FPDF();
+// Create new PDF document
+$pdf = new TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
+
+// Set document information
+$pdf->SetCreator('PUP System');
+$pdf->SetAuthor('PUP System');
+$pdf->SetTitle('Room List');
+$pdf->SetSubject('Room List');
+$pdf->SetMargins(15, 20, 15);
+$pdf->SetAutoPageBreak(TRUE, 20);
 $pdf->AddPage();
-$pdf->SetFont('Arial','B',12);
-$pdf->Cell(0,10,'Room List',0,1,'C');
 
-$pdf->SetFont('Arial','',10);
-$pdf->Cell(20,10,'ID',1);
-$pdf->Cell(50,10,'Room Code',1);
-$pdf->Cell(30,10,'Capacity',1);
-$pdf->Cell(50,10,'Building',1);
-$pdf->Ln();
+// University header
+$today = date("F d, Y");
+$header = <<<EOD
+<h2 style="text-align:center; color:#800000;">Polytechnic University of the Philippines - Taguig Campus</h2>
+<p style="text-align:center;">Date Created: $today</p>
+EOD;
 
-$sql = "SELECT * FROM tbl_room";
-$result = $conn->query($sql);
-while($row = $result->fetch_assoc()) {
-    $pdf->Cell(20,10,$row['room_id'],1);
-    $pdf->Cell(50,10,$row['room_code'],1);
-    $pdf->Cell(30,10,$row['capacity'],1);
-    $pdf->Cell(50,10,$row['building'],1);
-    $pdf->Ln();
+$pdf->writeHTML($header, true, false, true, false, '');
+
+// Table header
+$html = '<table border="1" cellpadding="4" cellspacing="0" style="border-collapse: collapse; width: 100%;">';
+$html .= '<tr style="background-color:#800000; color:#ffffff; font-weight:bold;">
+            <th>ID</th>
+            <th>Room Code</th>
+            <th>Capacity</th>
+            <th>Building</th>
+          </tr>';
+
+// Fetch data
+$result = $conn->query("SELECT * FROM tbl_room WHERE is_delete=0 ORDER BY room_id DESC");
+$i = 0;
+while ($row = $result->fetch_assoc()) {
+    $bg = $i % 2 === 0 ? '#ffffff' : '#f9f9f9';
+    $html .= '<tr style="background-color:' . $bg . ';">
+                <td>' . $row['room_id'] . '</td>
+                <td>' . $row['room_code'] . '</td>
+                <td>' . $row['capacity'] . '</td>
+                <td>' . $row['building'] . '</td>
+              </tr>';
+    $i++;
 }
-$pdf->Output();
+
+$html .= '</table>';
+
+// Output table
+$pdf->writeHTML($html, true, false, true, false, '');
+
+// Footer
+$pdf->SetY(-30);
+$pdf->SetFont('helvetica', '', 10);
+$pdf->Cell(0, 10, "Printed on: $today | Page ".$pdf->getAliasNumPage()." of ".$pdf->getAliasNbPages(), 0, false, 'R');
+
+// Close and output PDF
+$pdf->Output('rooms.pdf', 'I');
+
+$conn->close();
 ?>
