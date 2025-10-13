@@ -6,7 +6,6 @@ include '../../db.php';
 // Read JSON input
 $data = json_decode(file_get_contents("php://input"), true);
 
-// Get fields (match JS variable names)
 $code = $data['dept_code'] ?? '';
 $name = $data['dept_name'] ?? '';
 

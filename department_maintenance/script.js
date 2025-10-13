@@ -1,32 +1,43 @@
-let departmentList = []; // stores all departments from DB
+let departmentList = [];
+let currentSort = { column: "dept_id", direction: "asc" }; // default sorting
 
-// =================== ON PAGE LOAD ===================
 document.addEventListener("DOMContentLoaded", () => {
   loadDepartments();
 
   document.getElementById("search").addEventListener("keyup", searchDepartments);
-  document.getElementById("updateBtn").style.display = "none"; // hide Update initially
-  document.getElementById("saveBtn").style.display = "inline-block"; // show Save
+  document.getElementById("updateBtn").style.display = "none";
+  document.getElementById("saveBtn").style.display = "inline-block";
+
+  // Handle header click for sorting
+  document.querySelectorAll("#departmentTable thead th[data-column]").forEach((th) => {
+    th.addEventListener("click", () => {
+      const column = th.getAttribute("data-column");
+      toggleSort(column);
+    });
+  });
 });
 
-// =================== LOAD DEPARTMENTS ===================
 async function loadDepartments(query = "") {
-  console.log("Loading departments with query:", query);
+  const sortBy = currentSort.column || "dept_id";
+  const order = currentSort.direction || "asc";
 
   try {
-    const res = await fetch(`php/get_department.php?search=${encodeURIComponent(query)}`);
+    const res = await fetch(
+      `php/get_department.php?search=${encodeURIComponent(query)}&sort_by=${sortBy}&order=${order}`
+    );
     const data = await res.json();
-    console.log("Data received:", data);
 
+    departmentList = data;
     const tbody = document.querySelector("#departmentTable tbody");
     tbody.innerHTML = "";
 
     if (!Array.isArray(data) || data.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">No departments found</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="4" class="no-data">No departments found</td></tr>`;
+      updateSortIndicators();
       return;
     }
 
-    data.forEach(dept => {
+    data.forEach((dept) => {
       tbody.innerHTML += `
         <tr>
           <td>${dept.dept_id}</td>
@@ -39,12 +50,13 @@ async function loadDepartments(query = "") {
         </tr>
       `;
     });
+
+    updateSortIndicators();
   } catch (err) {
     console.error("Error loading departments:", err);
   }
 }
 
-// =================== SAVE DEPARTMENT ===================
 function saveDepartment() {
   const code = document.getElementById("department_code").value.trim();
   const name = document.getElementById("department_name").value.trim();
@@ -68,7 +80,6 @@ function saveDepartment() {
     .catch(err => console.error("Error saving department:", err));
 }
 
-// =================== UPDATE DEPARTMENT ===================
 function updateDepartment() {
   const id = document.getElementById("department_id").value;
   const code = document.getElementById("department_code").value.trim();
@@ -93,7 +104,6 @@ function updateDepartment() {
     .catch(err => console.error("Error updating department:", err));
 }
 
-// =================== EDIT DEPARTMENT ===================
 function editDepartment(dept) {
   document.getElementById("department_id").value = dept.dept_id;
   document.getElementById("department_code").value = dept.dept_code;
@@ -103,7 +113,6 @@ function editDepartment(dept) {
   document.getElementById("saveBtn").style.display = "none";
 }
 
-// =================== DELETE DEPARTMENT ===================
 function deleteDepartment(id) {
   if (!confirm("Are you sure you want to delete this department?")) return;
 
@@ -120,13 +129,40 @@ function deleteDepartment(id) {
     .catch(err => console.error("Error deleting department:", err));
 }
 
-// =================== SEARCH DEPARTMENTS ===================
-function searchDepartments(e) {
-  console.log("Search triggered:", e.target.value);
-  loadDepartments(e.target.value);
+function toggleSort(column) {
+  if (currentSort.column === column) {
+    currentSort.direction = currentSort.direction === "asc" ? "desc" : "asc";
+  } else {
+    currentSort.column = column;
+    currentSort.direction = "asc";
+  }
+
+  const searchValue = document.getElementById("search").value.trim();
+  loadDepartments(searchValue);
 }
 
-// =================== CLEAR FORM ===================
+function updateSortIndicators() {
+  document.querySelectorAll("#departmentTable thead th[data-column]").forEach((th) => {
+    const col = th.getAttribute("data-column");
+    const isActive = col === currentSort.column;
+    let label = th.getAttribute("data-label") || th.textContent.replace(/ ▲| ▼| ↕/g, "").trim();
+    th.setAttribute("data-label", label);
+
+    if (isActive) {
+      th.innerHTML = `${label} ${currentSort.direction === "asc" ? "▲" : "▼"}`;
+      th.classList.add("active-sort");
+    } else {
+      th.innerHTML = `${label} ↕`;
+      th.classList.remove("active-sort");
+    }
+  });
+}
+
+function searchDepartments(e) {
+  const query = e.target.value.trim();
+  loadDepartments(query);
+}
+
 function clearForm() {
   document.getElementById("department_id").value = "";
   document.getElementById("department_code").value = "";
@@ -136,13 +172,10 @@ function clearForm() {
   document.getElementById("saveBtn").style.display = "inline-block";
 }
 
-// =================== CANCEL EDIT ===================
 function cancelEdit() {
   clearForm();
 }
 
-
-// =================== EXPORT FUNCTIONS ===================
 function exportExcel() {
   window.location.href = "php/export_excel.php";
 }
