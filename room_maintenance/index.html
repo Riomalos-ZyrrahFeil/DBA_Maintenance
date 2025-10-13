@@ -13,22 +13,31 @@
     <!-- Room Form -->
     <div class="form-container">
       <input type="hidden" id="room_id">
+
       <div class="form-row">
-        <input type="text" id="room_code" placeholder="Room Code">
-        <input type="number" id="capacity" placeholder="Capacity">
-        <input type="text" id="building" placeholder="Building">
+        <label for="room_code">Room Code</label>
+        <input type="text" id="room_code" placeholder="Enter Room Code">
       </div>
+      <div class="form-row">
+        <label for="capacity">Capacity</label>
+        <input type="number" id="capacity" placeholder="Enter Capacity">
+      </div>
+      <div class="form-row">
+        <label for="building">Building</label>
+        <input type="text" id="building" placeholder="Enter Building">
+      </div>
+
       <div class="form-buttons">
         <button id="saveBtn">Save</button>
-        <button id="updateBtn">Update</button>
-        <button id="cancelBtn">Cancel</button>
+        <button id="updateBtn" class="hidden">Update</button>
+        <button id="cancelBtn" class="hidden">Cancel</button>
       </div>
     </div>
 
-    <!-- Search & Export -->
-    <div class="table-top">
+    <!-- Search and Export -->
+    <div class="search-export">
       <input type="text" id="search" placeholder="Search Room">
-      <div>
+      <div class="export-buttons">
         <button id="exportExcel">Export Excel</button>
         <button id="exportPDF">Export PDF</button>
       </div>
@@ -39,10 +48,10 @@
       <table id="roomTable">
         <thead>
           <tr>
-            <th>Room Id</th>
-            <th>Room Code</th>
-            <th>Capacity</th>
-            <th>Building</th>
+            <th data-column="room_id">Room Id</th>
+            <th data-column="room_code">Room Code</th>
+            <th data-column="capacity">Capacity</th>
+            <th data-column="building">Building</th>
             <th>Actions</th>
           </tr>
         </thead>
