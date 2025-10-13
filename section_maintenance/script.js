@@ -1,5 +1,6 @@
 // ===== Global Variables =====
 let sections = [];
+let currentSort = { column: "section_id", direction: "asc" }; // default sort
 const modal = document.getElementById("sectionModal");
 const modalTitle = document.querySelector(".modal-header h2");
 
@@ -28,36 +29,25 @@ function populateDropdown(id, data, field1, field2 = "") {
   });
 }
 
-// ===== Load Dropdown Data =====
+// ===== Load Dropdowns =====
 function loadDropdowns() {
-  fetch("php/fetch_course.php")
-    .then(res => res.json())
-    .then(data => populateDropdown("course_id", data, "course_code"))
-    .catch(() => alert("⚠️ Failed to load course data."));
-
-  fetch("php/fetch_term.php")
-    .then(res => res.json())
-    .then(data => populateDropdown("term_id", data, "term_code"))
-    .catch(() => alert("⚠️ Failed to load term data."));
-
-  fetch("php/fetch_instructor.php")
-    .then(res => res.json())
-    .then(data => populateDropdown("instructor_id", data, "instructor_name"))
-    .catch(() => alert("⚠️ Failed to load instructor data."));
-
-  fetch("php/fetch_room.php")
-    .then(res => res.json())
-    .then(data => populateDropdown("room_id", data, "room_code"))
-    .catch(() => alert("⚠️ Failed to load room data."));
+  fetch("php/fetch_course.php").then(r => r.json()).then(d => populateDropdown("course_id", d, "course_code"));
+  fetch("php/fetch_term.php").then(r => r.json()).then(d => populateDropdown("term_id", d, "term_code"));
+  fetch("php/fetch_instructor.php").then(r => r.json()).then(d => populateDropdown("instructor_id", d, "instructor_name"));
+  fetch("php/fetch_room.php").then(r => r.json()).then(d => populateDropdown("room_id", d, "room_code"));
 }
 
 // ===== Load Sections =====
-function loadSections() {
-  fetch("php/get_section.php")
+function loadSections(query = "") {
+  const sortBy = currentSort.column;
+  const order = currentSort.direction;
+
+  fetch(`php/get_section.php?search=${encodeURIComponent(query)}&sort_by=${sortBy}&order=${order}`)
     .then(res => res.json())
     .then(data => {
       sections = data;
       displaySections(sections);
+      updateSortIndicators();
     })
     .catch(() => alert("⚠️ Failed to load sections. Please refresh the page."));
 }
@@ -67,26 +57,31 @@ function displaySections(list) {
   const tbody = document.querySelector("#sectionTable tbody");
   tbody.innerHTML = "";
 
+  if (!Array.isArray(list) || list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="12">No sections found</td></tr>`;
+    return;
+  }
+
   list.forEach(sec => {
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${sec.section_id}</td>
-      <td>${sec.course_code}</td>
-      <td>${sec.term_code}</td>
-      <td>${sec.instructor_name}</td>
-      <td>${sec.room_name}</td>
-      <td>${sec.section_code}</td>
-      <td>${sec.year}</td>
-      <td>${sec.day_pattern}</td>
-      <td>${sec.start_time}</td>
-      <td>${sec.end_time}</td>
-      <td>${sec.max_capacity}</td>
-      <td>
-        <button class="editBtn" onclick="editSection(${sec.section_id})">Edit</button>
-        <button class="deleteBtn" onclick="deleteSection(${sec.section_id})">Delete</button>
-      </td>
+    tbody.innerHTML += `
+      <tr>
+        <td>${sec.section_id}</td>
+        <td>${sec.course_code}</td>
+        <td>${sec.term_code}</td>
+        <td>${sec.instructor_name}</td>
+        <td>${sec.room_name}</td>
+        <td>${sec.section_code}</td>
+        <td>${sec.year}</td>
+        <td>${sec.day_pattern}</td>
+        <td>${sec.start_time}</td>
+        <td>${sec.end_time}</td>
+        <td>${sec.max_capacity}</td>
+        <td>
+          <button onclick="editSection(${sec.section_id})">Edit</button>
+          <button onclick="deleteSection(${sec.section_id})">Delete</button>
+        </td>
+      </tr>
     `;
-    tbody.appendChild(row);
   });
 }
 
@@ -132,11 +127,7 @@ function saveSection() {
   const data = getFormData();
   if (!validateForm(data)) return;
 
-  fetch("php/add_section.php", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  })
+  fetch("php/add_section.php", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(data) })
     .then(res => res.json())
     .then(resp => {
       if (resp.status === "success") {
@@ -181,11 +172,7 @@ function updateSection() {
   const data = getFormData();
   if (!validateForm(data)) return;
 
-  fetch("php/update_section.php", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  })
+  fetch("php/update_section.php", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(data) })
     .then(res => res.json())
     .then(resp => {
       if (resp.status === "success") {
@@ -218,18 +205,38 @@ function deleteSection(id) {
 }
 
 // ===== Search Sections =====
-function searchSections() {
-  const query = document.getElementById("searchInput").value.toLowerCase();
-  const filtered = sections.filter(sec =>
-    sec.section_code.toLowerCase().includes(query) ||
-    sec.year.toString().includes(query) ||
-    sec.day_pattern.toLowerCase().includes(query) ||
-    sec.course_code.toLowerCase().includes(query) ||
-    sec.term_code.toLowerCase().includes(query) ||
-    sec.instructor_name.toLowerCase().includes(query) ||
-    sec.room_name.toLowerCase().includes(query)
-  );
-  displaySections(filtered);
+function searchSections(e) {
+  const query = e.target.value.trim().toLowerCase();
+  loadSections(query);
+}
+
+// ===== Sorting =====
+function toggleSort(column) {
+  if (currentSort.column === column) {
+    currentSort.direction = currentSort.direction === "asc" ? "desc" : "asc";
+  } else {
+    currentSort.column = column;
+    currentSort.direction = "asc";
+  }
+  const searchInput = document.getElementById("searchInput").value.trim();
+  loadSections(searchInput);
+}
+
+function updateSortIndicators() {
+  document.querySelectorAll("#sectionTable thead th[data-column]").forEach((th) => {
+    const col = th.getAttribute("data-column");
+    const isActive = col === currentSort.column;
+    let label = th.getAttribute("data-label") || th.textContent.replace(/ ▲| ▼| ↕/g, "").trim();
+    th.setAttribute("data-label", label);
+
+    if (isActive) {
+      th.innerHTML = `${label} ${currentSort.direction === "asc" ? "▲" : "▼"}`;
+      th.classList.add("active-sort");
+    } else {
+      th.innerHTML = `${label} ↕`;
+      th.classList.remove("active-sort");
+    }
+  });
 }
 
 // ===== Export =====
@@ -238,22 +245,23 @@ function exportPDF() { window.location.href = "php/export_pdf.php"; }
 
 // ===== On Page Load =====
 document.addEventListener("DOMContentLoaded", () => {
-  // Hide Update & Cancel buttons
   document.getElementById("updateBtn").style.display = "none";
   document.getElementById("cancelBtn").style.display = "none";
 
-  // Load dropdowns and sections
   loadDropdowns();
   loadSections();
 
-  // Event listeners
   document.getElementById("saveBtn").addEventListener("click", saveSection);
   document.getElementById("updateBtn").addEventListener("click", updateSection);
   document.getElementById("cancelBtn").addEventListener("click", () => { resetForm(); closeModal(); });
   document.getElementById("searchInput").addEventListener("input", searchSections);
-  document.getElementById("exportExcel").addEventListener("click", exportExcel);
-  document.getElementById("exportPDF").addEventListener("click", exportPDF);
   document.getElementById("addSectionBtn").addEventListener("click", () => { resetForm(); modalTitle.textContent = "Add Section"; openModal(); });
   document.getElementById("closeModal").addEventListener("click", closeModal);
+
+  // Sorting
+  document.querySelectorAll("#sectionTable thead th[data-column]").forEach(th => {
+    th.addEventListener("click", () => toggleSort(th.getAttribute("data-column")));
+  });
+
   window.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
 });
