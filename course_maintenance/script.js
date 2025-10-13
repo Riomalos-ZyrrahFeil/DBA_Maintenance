@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   // ==========================
-  // Load Courses (with sorting)
+  // Load Courses
   // ==========================
   async function loadCourses(query = "") {
     const sortBy = currentSort.column;
@@ -65,7 +65,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ==========================
-  // Sorting functions
+  // Sorting
   // ==========================
   function toggleSort(column) {
     if (currentSort.column === column) {
@@ -74,7 +74,6 @@ document.addEventListener("DOMContentLoaded", () => {
       currentSort.column = column;
       currentSort.direction = "asc";
     }
-
     const searchValue = searchInput.value.trim();
     loadCourses(searchValue);
   }
@@ -98,6 +97,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // CRUD + UI Logic
   // ==========================
   function attachRowEvents() {
+    // Edit button
     document.querySelectorAll(".edit-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
         const id = btn.getAttribute("data-id");
@@ -118,19 +118,37 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
 
+    // Delete button (now calls function)
     document.querySelectorAll(".delete-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
         const id = btn.getAttribute("data-id");
-        if (confirm("Are you sure you want to delete this course?")) {
-          fetch(`php/delete_course.php?id=${id}`, { method: "DELETE" })
-            .then((res) => res.json())
-            .then(() => loadCourses());
-        }
+        deleteCourse(id);
       });
     });
   }
 
-// ADD COURSE
+  // ==========================
+  // Delete Course Function
+  // ==========================
+  function deleteCourse(id) {
+    if (!confirm("Are you sure you want to delete this course?")) return;
+
+    fetch(`php/delete_course.php?id=${id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        alert(data.message);
+        if (data.status === "success") {
+          loadCourses();
+        }
+      })
+      .catch((err) => {
+        alert("❌ Error deleting course: " + err.message);
+      });
+  }
+
+  // ==========================
+  // ADD COURSE
+  // ==========================
   saveBtn.addEventListener("click", () => {
     const formData = new FormData();
     formData.append("course_code", courseFormFields.course_code.value);
@@ -140,42 +158,47 @@ document.addEventListener("DOMContentLoaded", () => {
     formData.append("units", courseFormFields.units.value);
 
     fetch("php/add_course.php", { method: "POST", body: formData })
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         alert(data.message);
         if (data.status === "success") {
           clearForm();
           loadCourses();
         }
       })
-      .catch(err => console.error("Error:", err));
+      .catch((err) => console.error("Error:", err));
   });
 
+  // ==========================
   // UPDATE COURSE
+  // ==========================
   updateBtn.addEventListener("click", () => {
     const formData = new FormData();
-    formData.append("course_id", document.getElementById("course_id").value);
-    formData.append("course_code", document.getElementById("course_code").value);
-    formData.append("title", document.getElementById("title").value);
-    formData.append("lecture_hours", document.getElementById("lecture_hours").value);
-    formData.append("lab_hours", document.getElementById("lab_hours").value);
-    formData.append("units", document.getElementById("units").value);
+    formData.append("course_id", courseFormFields.course_id.value);
+    formData.append("course_code", courseFormFields.course_code.value);
+    formData.append("title", courseFormFields.title.value);
+    formData.append("lecture_hours", courseFormFields.lecture_hours.value);
+    formData.append("lab_hours", courseFormFields.lab_hours.value);
+    formData.append("units", courseFormFields.units.value);
 
     fetch("php/update_course.php", {
       method: "POST",
       body: formData
     })
-    .then(res => res.json())
-    .then(data => {
-      alert(data.message);
-      if (data.status === "success") {
-        loadCourses();
-        clearForm();
-      }
-    })
-    .catch(err => console.error("Error:", err));
+      .then((res) => res.json())
+      .then((data) => {
+        alert(data.message);
+        if (data.status === "success") {
+          loadCourses();
+          clearForm();
+        }
+      })
+      .catch((err) => console.error("Error:", err));
   });
 
+  // ==========================
+  // CANCEL BUTTON
+  // ==========================
   cancelBtn.addEventListener("click", clearForm);
 
   function clearForm() {
@@ -186,7 +209,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ==========================
-  // Search functionality (fixed)
+  // Search functionality
   // ==========================
   searchInput.addEventListener("keyup", () => {
     const filter = searchInput.value.toLowerCase();
@@ -206,11 +229,9 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-    // Remove old message first
     const existingMsg = tbody.querySelector(".no-data");
     if (existingMsg) existingMsg.remove();
 
-    // Show message if no matches
     if (visibleCount === 0) {
       const msgRow = document.createElement("tr");
       msgRow.classList.add("no-data");
@@ -220,7 +241,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // ==========================
-  // Add Sorting Event Listeners
+  // Sort Event Listeners
   // ==========================
   document.querySelectorAll("#courseTable thead th[data-column]").forEach((th) => {
     th.addEventListener("click", () => {
