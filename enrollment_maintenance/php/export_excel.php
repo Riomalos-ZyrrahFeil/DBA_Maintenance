@@ -35,7 +35,7 @@ echo '<tr>
       </tr>';
 
 // Fetch Data
-$result = $conn->query("SELECT * FROM tbl_enrollment ORDER BY enrollment_id DESC");
+$result = $conn->query("SELECT * FROM tbl_enrollment WHERE is_deleted = 0 ORDER BY enrollment_id DESC");
 $i = 0;
 while ($row = $result->fetch_assoc()) {
     $bg = $i % 2 === 0 ? '#ffffff' : '#f9f9f9';

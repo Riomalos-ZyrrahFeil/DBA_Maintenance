@@ -38,8 +38,7 @@ $html .= '<tr style="background-color:#800000; color:#ffffff; font-weight:bold;"
           </tr>';
 
 // Fetch data
-$query = "SELECT * FROM tbl_enrollment ORDER BY enrollment_id DESC";
-$result = $conn->query($query);
+$result = $conn->query("SELECT * FROM tbl_enrollment WHERE is_deleted = 0 ORDER BY enrollment_id DESC");
 
 $i = 0;
 while ($row = $result->fetch_assoc()) {
