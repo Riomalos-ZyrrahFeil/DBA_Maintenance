@@ -2,50 +2,67 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Program Maintenance</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Program Maintenance</h1>
+  <div class="container">
+    <h1>Program Maintenance</h1>
 
-  <div class="form-container">
-    <input type="hidden" id="program_id">
+    <!-- Program Form -->
+    <div class="form-container">
+      <input type="hidden" id="program_id">
 
-    <div class="form-row">
-      <input type="text" id="program_code" placeholder="Program Code">
-      <input type="text" id="program_name" placeholder="Program Name">
-      <select id="dept_id">
-        <option value="">Select Department</option>
-      </select>
+      <div class="form-row">
+        <label for="program_code">Program Code</label>
+        <input type="text" id="program_code" placeholder="Enter Program Code">
+      </div>
+
+      <div class="form-row">
+        <label for="program_name">Program Name</label>
+        <input type="text" id="program_name" placeholder="Enter Program Name">
+      </div>
+
+      <div class="form-row">
+        <label for="dept_id">Department</label>
+        <select id="dept_id">
+          <option value="">Select Department</option>
+        </select>
+      </div>
+
+      <div class="form-buttons">
+        <button id="saveBtn" onclick="saveProgram()">Save</button>
+        <button id="updateBtn" class="hidden" onclick="updateProgram()">Update</button>
+        <button id="cancelBtn" class="hidden" onclick="cancelEdit()">Cancel</button>
+      </div>
     </div>
 
-    <div class="form-row">
-      <button id="saveBtn">Save</button>
-      <button id="updateBtn">Update</button>
-      <button id="cancelBtn">Cancel</button>
+    <!-- Search and Export -->
+    <div class="search-export">
+      <input type="text" id="search" placeholder="Search Program">
+      <div class="export-buttons">
+        <button onclick="exportExcel()">Export Excel</button>
+        <button onclick="exportPDF()">Export PDF</button>
+      </div>
+    </div>
+
+    <!-- Program Table -->
+    <div class="table-container">
+      <table id="programTable">
+        <thead>
+          <tr>
+            <th data-column="program_id">ID</th>
+            <th data-column="program_code">Program Code</th>
+            <th data-column="program_name">Program Name</th>
+            <th data-column="dept_name">Department</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </div>
   </div>
-
-  <div class="actions">
-    <input type="text" id="search" placeholder="Search Program...">
-    <div>
-      <button id="exportExcel">Export Excel</button>
-      <button id="exportPDF">Export PDF</button>
-    </div>
-  </div>
-
-  <table id="programTable">
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Program Code</th>
-        <th>Program Name</th>
-        <th>Department</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
 
   <script src="script.js"></script>
 </body>

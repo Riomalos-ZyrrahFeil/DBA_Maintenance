@@ -1,181 +1,226 @@
+let programList = [];
+let departmentList = [];
+let currentSort = { column: "program_id", direction: "decs" }; // default sorting
+
 document.addEventListener("DOMContentLoaded", () => {
-  const saveBtn = document.getElementById("saveBtn");
-  const updateBtn = document.getElementById("updateBtn");
-  const cancelBtn = document.getElementById("cancelBtn");
-  const search = document.getElementById("search");
-  const deptSelect = document.getElementById("dept_id");
-  const programTable = document.querySelector("#programTable tbody");
+  loadDepartments();  // load departments first
+  loadPrograms();     // then load programs
 
-  let programList = [];
-  let departmentList = [];
+  document.getElementById("search").addEventListener("keyup", searchPrograms);
+  document.getElementById("updateBtn").style.display = "none";
+  document.getElementById("saveBtn").style.display = "inline-block";
 
-  // Load departments first
-  fetchDepartments().then(() => {
-    fetchPrograms();
+  // Handle header click for sorting
+  document.querySelectorAll("#programTable thead th[data-column]").forEach((th) => {
+    th.addEventListener("click", () => {
+      const column = th.getAttribute("data-column");
+      toggleSort(column);
+    });
   });
 
-  saveBtn.addEventListener("click", addProgram);
-  updateBtn.addEventListener("click", updateProgram);
-  cancelBtn.addEventListener("click", resetForm);
-  search.addEventListener("input", () => fetchPrograms(search.value.trim()));
+  // Export buttons
+  document.getElementById("exportExcel").addEventListener("click", exportExcel);
+  document.getElementById("exportPDF").addEventListener("click", exportPDF);
+});
 
-  document.getElementById("exportExcel").addEventListener("click", () => {
-    window.location.href = "php/export_excel.php";
-  });
-  document.getElementById("exportPDF").addEventListener("click", () => {
-    window.location.href = "php/export_pdf.php";
-  });
+// ==================== LOAD DEPARTMENTS ====================
+async function loadDepartments() {
+  try {
+    const res = await fetch("../department_maintenance/php/fetch_department.php");
+    const data = await res.json();
+    departmentList = data;
 
-  // ==================== FETCH DEPARTMENTS ====================
-  async function fetchDepartments() {
-    try {
-      const res = await fetch("../department_maintenance/php/fetch_department.php");
-      const data = await res.json();
-      departmentList = data;
-
-      deptSelect.innerHTML = '<option value="">Select Department</option>';
-      data.forEach(d => {
-        deptSelect.innerHTML += `<option value="${d.dept_id}">${d.dept_name}</option>`;
-      });
-    } catch (err) {
-      console.error("Error fetching departments:", err);
-    }
+    const deptSelect = document.getElementById("dept_id");
+    deptSelect.innerHTML = '<option value="">Select Department</option>';
+    data.forEach(d => {
+      deptSelect.innerHTML += `<option value="${d.dept_id}">${d.dept_name}</option>`;
+    });
+  } catch (err) {
+    console.error("Error loading departments:", err);
   }
+}
 
-  // ==================== FETCH PROGRAMS ====================
-  async function fetchPrograms(query = "") {
-    try {
-      const res = await fetch(`php/get_program.php?search=${query}`);
-      const data = await res.json();
-      programList = data;
+// ==================== LOAD PROGRAMS ====================
+async function loadPrograms(query = "") {
+  const sortBy = currentSort.column || "program_id";
+  const order = currentSort.direction || "desc";
 
-      programTable.innerHTML = "";
-      data.forEach(p => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
+  try {
+    const res = await fetch(
+      `php/get_program.php?search=${encodeURIComponent(query)}&sort_by=${sortBy}&order=${order}`
+    );
+    const data = await res.json();
+    programList = data;
+
+    const tbody = document.querySelector("#programTable tbody");
+    tbody.innerHTML = "";
+
+    if (!Array.isArray(data) || data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5" class="no-data">No programs found</td></tr>`;
+      updateSortIndicators();
+      return;
+    }
+
+    data.forEach((p) => {
+      tbody.innerHTML += `
+        <tr>
           <td>${p.program_id}</td>
           <td>${p.program_code}</td>
           <td>${p.program_name}</td>
           <td>${p.dept_name}</td>
           <td>
-            <button class="edit-btn">✏️ Edit</button>
-            <button class="delete-btn">🗑 Delete</button>
+            <button class="action-btn edit-btn" onclick='editProgram(${JSON.stringify(p)})'>Edit</button>
+            <button class="action-btn delete-btn" onclick='deleteProgram(${p.program_id})'>Delete</button>
           </td>
-        `;
-        const editBtn = tr.querySelector(".edit-btn");
-        editBtn.addEventListener("click", () => editProgram(p));
+        </tr>
+      `;
+    });
 
-        const deleteBtn = tr.querySelector(".delete-btn");
-        deleteBtn.addEventListener("click", () => deleteProgram(p.program_id));
+    updateSortIndicators();
+  } catch (err) {
+    console.error("Error loading programs:", err);
+  }
+}
 
-        programTable.appendChild(tr);
-      });
-    } catch (err) {
-      console.error("Error fetching programs:", err);
-    }
+// ==================== SAVE PROGRAM ====================
+function saveProgram() {
+  const data = collectFormData();
+  if (!data.program_code || !data.program_name || !data.dept_id) {
+    alert("Please fill out all fields!");
+    return;
   }
 
-  // ==================== EDIT PROGRAM ====================
-  function editProgram(p) {
-    document.getElementById("program_id").value = p.program_id;
-    document.getElementById("program_code").value = p.program_code;
-    document.getElementById("program_name").value = p.program_name;
-    document.getElementById("dept_id").value = p.dept_id;
-
-    saveBtn.style.display = "none";
-    updateBtn.style.display = "inline-block";
-    cancelBtn.style.display = "inline-block";
-  }
-
-  // ==================== DELETE PROGRAM ====================
-  function deleteProgram(id) {
-    if (!confirm("Are you sure you want to delete this program?")) return;
-
-    fetch("php/delete_program.php", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id })
+  fetch("php/add_program.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  })
+    .then(res => res.json())
+    .then(msg => {
+      alert(msg.message);
+      clearForm();
+      loadPrograms();
     })
-      .then(res => res.json())
-      .then(res => {
-        alert(res.message);
-        fetchPrograms();
-      })
-      .catch(err => console.error("Error deleting program:", err));
+    .catch(err => console.error("Error saving program:", err));
+}
+
+// ==================== UPDATE PROGRAM ====================
+function updateProgram() {
+  const data = collectFormData();
+  if (!data.program_id) {
+    alert("No program selected for update.");
+    return;
   }
 
-  // ==================== ADD PROGRAM ====================
-  function addProgram() {
-    const data = collectFormData();
-    if (!data.program_code || !data.program_name || !data.dept_id) {
-      alert("Please fill out all fields!");
-      return;
-    }
-
-    fetch("php/add_program.php", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
+  fetch("php/update_program.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  })
+    .then(res => res.json())
+    .then(msg => {
+      alert(msg.message);
+      clearForm();
+      loadPrograms();
     })
-      .then(res => res.json())
-      .then(res => {
-        alert(res.message);
-        fetchPrograms();
-        resetForm();
-      })
-      .catch(err => console.error("Error adding program:", err));
-  }
+    .catch(err => console.error("Error updating program:", err));
+}
 
-  // ==================== UPDATE PROGRAM ====================
-  function updateProgram() {
-    const data = collectFormData();
-    if (!data.program_id) {
-      alert("No program selected for update.");
-      return;
-    }
+// ==================== EDIT PROGRAM ====================
+function editProgram(p) {
+  document.getElementById("program_id").value = p.program_id;
+  document.getElementById("program_code").value = p.program_code;
+  document.getElementById("program_name").value = p.program_name;
+  document.getElementById("dept_id").value = p.dept_id;
 
-    fetch("php/update_program.php", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
+  document.getElementById("updateBtn").style.display = "inline-block";
+  document.getElementById("saveBtn").style.display = "none";
+}
+
+// ==================== DELETE PROGRAM ====================
+function deleteProgram(id) {
+  if (!confirm("Are you sure you want to delete this program?")) return;
+
+  fetch("php/delete_program.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ program_id: id })
+  })
+    .then(res => res.json())
+    .then(msg => {
+      alert(msg.message);
+      loadPrograms();
     })
-      .then(res => res.json())
-      .then(res => {
-        alert(res.message);
-        fetchPrograms();
-        resetForm();
-      })
-      .catch(err => console.error("Error updating program:", err));
+    .catch(err => console.error("Error deleting program:", err));
+}
+
+// ==================== COLLECT FORM DATA ====================
+function collectFormData() {
+  return {
+    program_id: document.getElementById("program_id").value,
+    program_code: document.getElementById("program_code").value.trim(),
+    program_name: document.getElementById("program_name").value.trim(),
+    dept_id: document.getElementById("dept_id").value
+  };
+}
+
+// ==================== CLEAR FORM ====================
+function clearForm() {
+  document.getElementById("program_id").value = "";
+  document.getElementById("program_code").value = "";
+  document.getElementById("program_name").value = "";
+  document.getElementById("dept_id").value = "";
+
+  document.getElementById("updateBtn").style.display = "none";
+  document.getElementById("saveBtn").style.display = "inline-block";
+}
+
+// ==================== CANCEL EDIT ====================
+function cancelEdit() {
+  clearForm();
+}
+
+// ==================== EXPORT ====================
+function exportExcel() {
+  window.location.href = "php/export_excel.php";
+}
+
+function exportPDF() {
+  window.location.href = "php/export_pdf.php";
+}
+
+// ==================== SORTING ====================
+function toggleSort(column) {
+  if (currentSort.column === column) {
+    // toggle direction
+    currentSort.direction = currentSort.direction === "asc" ? "desc" : "asc";
+  } else {
+    currentSort.column = column;
+    currentSort.direction = "desc"; // default to DESC on new column
   }
 
-  // ==================== RESET FORM ====================
-  function resetForm() {
-    document.getElementById("program_id").value = "";
-    document.getElementById("program_code").value = "";
-    document.getElementById("program_name").value = "";
-    document.getElementById("dept_id").value = "";
+  const searchValue = document.getElementById("search").value.trim();
+  loadPrograms(searchValue);
+}
 
-    saveBtn.style.display = "inline-block";
-    updateBtn.style.display = "none";
-    cancelBtn.style.display = "none";
-  }
+function updateSortIndicators() {
+  document.querySelectorAll("#programTable thead th[data-column]").forEach((th) => {
+    const col = th.getAttribute("data-column");
+    const isActive = col === currentSort.column;
+    let label = th.getAttribute("data-label") || th.textContent.replace(/ ▲| ▼| ↕/g, "").trim();
+    th.setAttribute("data-label", label);
 
-  // ==================== COLLECT FORM DATA ====================
-  function collectFormData() {
-    return {
-      program_id: document.getElementById("program_id").value,
-      program_code: document.getElementById("program_code").value.trim(),
-      program_name: document.getElementById("program_name").value.trim(),
-      dept_id: document.getElementById("dept_id").value
-    };
-  }
+    if (isActive) {
+      th.innerHTML = `${label} ${currentSort.direction === "asc" ? "▲" : "▼"}`;
+      th.classList.add("active-sort");
+    } else {
+      th.innerHTML = `${label} ↕`;
+      th.classList.remove("active-sort");
+    }
+  });
+}
 
-  // ==================== EXPORT ====================
-  function exportExcel() {
-    window.location.href = "php/export_excel.php";
-  }
-
-  function exportPDF() {
-    window.location.href = "php/export_pdf.php";
-  }
-});
+function searchPrograms(e) {
+  const query = e.target ? e.target.value.trim() : e;
+  loadPrograms(query);
+}
