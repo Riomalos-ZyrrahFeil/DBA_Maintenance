@@ -3,7 +3,7 @@ include '../../db.php';
 header("Content-Type: application/vnd.ms-excel");
 header("Content-Disposition: attachment; filename=departments.xls");
 
-$today = date("F d, Y H:i");
+$today = date("F d, Y");
 
 // Start table
 echo '<table border="1" style="width:100%; border-collapse: collapse; font-family: Poppins, sans-serif;">';
