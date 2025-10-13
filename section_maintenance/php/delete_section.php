@@ -10,11 +10,12 @@ if(!isset($_GET['id'])){
 
 $section_id = $_GET['id'];
 
-$stmt = $conn->prepare("DELETE FROM tbl_section WHERE section_id=?");
+// Soft delete: set is_deleted = 1 instead of removing the row
+$stmt = $conn->prepare("UPDATE tbl_section SET is_deleted = 1 WHERE section_id = ?");
 $stmt->bind_param("i", $section_id);
 
 if($stmt->execute()){
-    echo json_encode(["status" => "success"]);
+    echo json_encode(["status" => "success", "message" => "Section deleted successfully (soft delete)."]);
 } else {
     echo json_encode(["status" => "error", "message" => $stmt->error]);
 }
