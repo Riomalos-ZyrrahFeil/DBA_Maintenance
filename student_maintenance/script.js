@@ -3,6 +3,10 @@ let programList = [];
 let studentList = [];
 let currentSort = { column: "student_id", direction: "desc" }; // default sorting
 
+let currentPage = 1;
+const recordsPerPage = 10;
+let totalRecords = 0;
+
 // =================== ON PAGE LOAD ===================
 document.addEventListener("DOMContentLoaded", () => {
   loadPrograms().then(() => loadStudents());
@@ -14,7 +18,6 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("updateBtn").addEventListener("click", updateStudent);
   document.getElementById("search").addEventListener("keyup", searchStudents);
 
-  // Enable sorting by clicking headers
   document.querySelectorAll("#studentTable thead th[data-column]").forEach(th => {
     th.addEventListener("click", () => {
       const column = th.getAttribute("data-column");
@@ -44,29 +47,36 @@ async function loadPrograms() {
   }
 }
 
-// =================== LOAD STUDENTS ===================
-async function loadStudents(query = "") {
+// =================== LOAD STUDENTS===================
+async function loadStudents(query = "", page = currentPage, limit = recordsPerPage) {
   const sortBy = currentSort.column || "student_id";
   const order = currentSort.direction || "asc";
 
   try {
     const res = await fetch(
-      `php/get_student.php?search=${encodeURIComponent(query)}&sort_by=${sortBy}&order=${order}`
+      `php/get_student.php?search=${encodeURIComponent(query)}&sort_by=${sortBy}&order=${order}&page=${page}&limit=${limit}`
     );
-    const data = await res.json();
-    studentList = data;
+    
+    const result = await res.json();
+
+    studentList = result.data || [];
+    totalRecords = result.total_records || 0;
+    currentPage = result.current_page || 1; 
 
     const tbody = document.querySelector("#studentTable tbody");
     tbody.innerHTML = "";
 
-    if (!Array.isArray(data) || data.length === 0) {
+    if (!Array.isArray(studentList) || studentList.length === 0) {
       tbody.innerHTML = `<tr><td colspan="9" class="no-data">No students found</td></tr>`;
       updateSortIndicators();
+      document.getElementById('pagination-info').textContent = 'Total: 0 records';
+      document.getElementById('pagination-controls').innerHTML = '';
       return;
     }
 
-    data.forEach(stu => {
+    studentList.forEach(stu => {
       const programName = getProgramName(stu.program_id);
+      
       tbody.innerHTML += `
         <tr>
           <td>${stu.student_id}</td>
@@ -78,17 +88,105 @@ async function loadStudents(query = "") {
           <td>${stu.year_level}</td>
           <td>${programName}</td>
           <td>
-            <button class="action-btn edit-btn" onclick='editStudent(${JSON.stringify(stu)})'>Edit</button>
-            <button class="action-btn delete-btn" onclick='deleteStudent(${stu.student_id})'>Delete</button>
-          </td>
+            <div style="display: flex; justify-content: center; gap: 5px;">
+              <button class="action-btn edit-btn" onclick='editStudent(${stu.student_id})'>Edit</button>
+              <button class="action-btn delete-btn" onclick='deleteStudent(${stu.student_id})'>Delete</button>
+            </div>
+           </td>
         </tr>
       `;
     });
 
     updateSortIndicators();
+    renderPagination();
+
   } catch (err) {
     console.error("Error loading students:", err);
+    const tbody = document.querySelector("#studentTable tbody");
+    tbody.innerHTML = `<tr><td colspan="9" class="no-data">Error loading data. Check console.</td></tr>`;
+    document.getElementById('pagination-info').textContent = '';
+    document.getElementById('pagination-controls').innerHTML = '';
   }
+}
+
+// =================== PAGINATION HANDLERS ===================
+function renderPagination() {
+  const totalPages = Math.ceil(totalRecords / recordsPerPage);
+  const controlsContainer = document.getElementById('pagination-controls');
+  const infoContainer = document.getElementById('pagination-info');
+  controlsContainer.innerHTML = '';
+
+  if (totalPages <= 1) {
+    infoContainer.textContent = `Total: ${totalRecords} records`;
+    return;
+  }
+
+  // Calculate start and end indices for display
+  const startRecord = (currentPage - 1) * recordsPerPage + 1;
+  const endRecord = Math.min(currentPage * recordsPerPage, totalRecords);
+  
+  infoContainer.textContent = `Showing ${startRecord} to ${endRecord} of ${totalRecords} records (Page ${currentPage} of ${totalPages})`;
+
+  // Previous Button
+  const prevBtn = document.createElement('button');
+  prevBtn.textContent = '« Previous';
+  prevBtn.disabled = currentPage === 1;
+  prevBtn.onclick = () => goToPage(currentPage - 1);
+  controlsContainer.appendChild(prevBtn);
+  // Page Buttons
+  const maxPagesToShow = 5;
+  let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+  let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+
+  if (endPage - startPage + 1 < maxPagesToShow) {
+    startPage = Math.max(1, endPage - maxPagesToShow + 1);
+  }
+  
+  for (let i = startPage; i <= endPage; i++) {
+    const pageBtn = document.createElement('button');
+    pageBtn.textContent = i;
+    pageBtn.classList.add('page-btn');
+    if (i === currentPage) {
+        pageBtn.classList.add('active');
+        pageBtn.disabled = true;
+    }
+    pageBtn.onclick = () => goToPage(i);
+    controlsContainer.appendChild(pageBtn);
+  }
+
+  // Next Button
+  const nextBtn = document.createElement('button');
+  nextBtn.textContent = 'Next »';
+  nextBtn.disabled = currentPage === totalPages;
+  nextBtn.onclick = () => goToPage(currentPage + 1);
+  controlsContainer.appendChild(nextBtn);
+}
+
+function goToPage(page) {
+  if (page < 1 || page > Math.ceil(totalRecords / recordsPerPage)) return;
+  currentPage = page;
+  const query = document.getElementById("search").value.trim();
+  loadStudents(query, currentPage, recordsPerPage);
+}
+
+// =================== SEARCH HANDLER ===================
+function searchStudents(e) {
+  const query = e.target.value.trim();
+  currentPage = 1;
+  loadStudents(query);
+}
+
+function toggleSort(column) {
+  if (currentSort.column === column) {
+    currentSort.direction = currentSort.direction === "asc" ? "desc" : "asc";
+  } else {
+    currentSort.column = column;
+    currentSort.direction = "asc";
+  }
+
+  currentPage = 1;
+  const query = document.getElementById("search").value.trim();
+  loadStudents(query);
 }
 
 // =================== SORT HANDLERS ===================
@@ -138,6 +236,7 @@ function addStudent() {
     .then(res => res.text())
     .then(msg => {
       alert(msg);
+      currentPage = 1
       loadStudents();
       clearForm();
     })
@@ -161,6 +260,7 @@ function updateStudent() {
     .then(res => res.text())
     .then(msg => {
       alert(msg);
+      currentPage = 1;
       loadStudents();
       clearForm();
     })
@@ -168,20 +268,30 @@ function updateStudent() {
 }
 
 // =================== EDIT STUDENT ===================
-function editStudent(stu) {
-  document.getElementById("student_id").value = stu.student_id;
-  document.getElementById("student_no").value = stu.student_no || "";
+function editStudent(studentId) {
+  const stuData = studentList.find(s => s.student_id == studentId);
+  
+  if (!stuData) {
+    alert("Student data not found in the current list. Refreshing may help.");
+    return;
+  }
 
-  const nameParts = stu.student_name.split(" ");
+  document.getElementById("student_id").value = stuData.student_id;
+  document.getElementById("student_no").value = stuData.student_no || "";
+
+  const nameParts = stuData.student_name.split(" ");
   document.getElementById("first_name").value = nameParts[0] || "";
-  document.getElementById("middle_name").value = nameParts.length === 3 ? nameParts[1] : "";
+
+  const isMiddleNamePresent = nameParts.length > 2 && nameParts[1] !== nameParts[nameParts.length - 1];
+  document.getElementById("middle_name").value = isMiddleNamePresent ? nameParts[1] : ""; 
+  
   document.getElementById("last_name").value = nameParts[nameParts.length - 1] || "";
 
-  document.getElementById("email").value = stu.email;
-  document.getElementById("gender").value = stu.gender;
-  document.getElementById("birthdate").value = stu.birthdate;
-  document.getElementById("year_level").value = stu.year_level;
-  document.getElementById("program_id").value = stu.program_id;
+  document.getElementById("email").value = stuData.email;
+  document.getElementById("gender").value = stuData.gender;
+  document.getElementById("birthdate").value = stuData.birthdate;
+  document.getElementById("year_level").value = stuData.year_level;
+  document.getElementById("program_id").value = stuData.program_id;
 
   document.getElementById("updateBtn").style.display = "inline-block";
   document.getElementById("saveBtn").style.display = "none";
@@ -199,6 +309,7 @@ function deleteStudent(id) {
     .then(res => res.text())
     .then(msg => {
       alert(msg);
+      currentPage = 1;
       loadStudents();
     })
     .catch(err => console.error("Error deleting student:", err));

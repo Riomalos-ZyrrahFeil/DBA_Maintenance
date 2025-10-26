@@ -1,50 +1,57 @@
 <?php
 include '../../db.php';
 
+$page = (int) ($_GET['page'] ?? 1);
+$limit = (int) ($_GET['limit'] ?? 10);
+$offset = ($page - 1) * $limit;
+
 // Optional filters and sorting
-$student_id = $_GET['student_id'] ?? null;
 $search = trim($_GET['search'] ?? '');
 $sort_by = $_GET['sort_by'] ?? 'student_id';
 $order = strtoupper($_GET['order'] ?? 'DESC');
 
-// ✅ Validate sorting direction
+// Validate sorting and limit/offset
 if (!in_array($order, ['ASC', 'DESC'])) {
-  $order = 'DESC';
+    $order = 'DESC';
 }
-
-// ✅ Whitelist sortable columns
 $allowed_sort_columns = ['student_id', 'student_no', 'student_name', 'email', 'gender', 'birthdate', 'year_level', 'program_id'];
 if (!in_array($sort_by, $allowed_sort_columns)) {
-  $sort_by = 'student_id';
+    $sort_by = 'student_id';
 }
+if ($limit <= 0) $limit = 10;
+if ($offset < 0) $offset = 0;
 
-if ($student_id) {
-  // ✅ Fetch a single student by ID (skip deleted ones)
-  $sql = "SELECT * FROM tbl_student WHERE student_id = ? AND is_deleted = 0";
-  $stmt = $conn->prepare($sql);
-  $stmt->bind_param("i", $student_id);
-  $stmt->execute();
-  $result = $stmt->get_result();
-  $student = $result->fetch_assoc();
-
-  echo json_encode($student ?: ['error' => 'Student not found']);
-  exit;
-}
-
-// ✅ Fetch all students (skip deleted ones)
+$count_sql = "SELECT COUNT(*) as total FROM tbl_student WHERE is_deleted = 0";
 if ($search !== '') {
-  $sql = "SELECT * FROM tbl_student 
-          WHERE is_deleted = 0
-            AND (student_name LIKE ? OR student_no LIKE ?)
-          ORDER BY $sort_by $order";
-  $stmt = $conn->prepare($sql);
-  $search_term = "%$search%";
-  $stmt->bind_param("ss", $search_term, $search_term);
+    $count_sql .= " AND (student_name LIKE ? OR student_no LIKE ?)";
+}
+
+$count_stmt = $conn->prepare($count_sql);
+if ($search !== '') {
+    $search_term = "%$search%";
+    $count_stmt->bind_param("ss", $search_term, $search_term);
+}
+$count_stmt->execute();
+$count_result = $count_stmt->get_result();
+$total_records = $count_result->fetch_assoc()['total'];
+
+$select_sql = "SELECT * FROM tbl_student 
+               WHERE is_deleted = 0";
+
+if ($search !== '') {
+    $select_sql .= " AND (student_name LIKE ? OR student_no LIKE ?)";
+}
+
+$select_sql .= " ORDER BY $sort_by $order 
+                 LIMIT ? OFFSET ?";
+
+$stmt = $conn->prepare($select_sql);
+
+if ($search !== '') {
+    $search_term = "%$search%";
+    $stmt->bind_param("ssii", $search_term, $search_term, $limit, $offset);
 } else {
-  $sql = "SELECT * FROM tbl_student 
-          WHERE is_deleted = 0
-          ORDER BY $sort_by $order";
-  $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ii", $limit, $offset);
 }
 
 $stmt->execute();
@@ -52,8 +59,13 @@ $result = $stmt->get_result();
 
 $students = [];
 while ($row = $result->fetch_assoc()) {
-  $students[] = $row;
+    $students[] = $row;
 }
 
-echo json_encode($students);
+echo json_encode([
+    'data' => $students,
+    'total_records' => $total_records,
+    'current_page' => $page,
+    'per_page' => $limit
+]);
 ?>
