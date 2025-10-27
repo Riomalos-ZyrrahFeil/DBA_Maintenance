@@ -9,16 +9,20 @@ try {
         // ✅ Get prerequisites for a specific course
         $stmt = $conn->prepare("
             SELECT 
+                cp.prerequisite_id,
                 cp.course_id,
-                cp.prerequisite_course_id,
+                cp.prereq_course_id, /* FIX: Corrected column name */
+                c1.course_code AS course_code,
                 c1.title AS course_title,
+                c2.course_code AS prerequisite_code,
                 c2.title AS prerequisite_title
             FROM tbl_course_prerequisite cp
             INNER JOIN tbl_course c1 ON cp.course_id = c1.course_id
-            INNER JOIN tbl_course c2 ON cp.prerequisite_course_id = c2.course_id
+            INNER JOIN tbl_course c2 ON cp.prereq_course_id = c2.course_id /* FIX: Corrected column name */
             WHERE cp.course_id = ? 
-            AND (cp.is_deleted = 0 OR cp.is_deleted IS NULL)
-            ORDER BY cp.course_id DESC
+              AND c1.is_deleted = 0 
+              AND c2.is_deleted = 0 
+            ORDER BY cp.prerequisite_id DESC
         ");
         $stmt->bind_param("i", $course_id);
         $stmt->execute();
@@ -35,15 +39,19 @@ try {
         // ✅ Get all prerequisites
         $query = "
             SELECT 
+                cp.prerequisite_id,
                 cp.course_id,
-                cp.prerequisite_course_id,
+                cp.prereq_course_id, /* FIX: Corrected column name */
+                c1.course_code AS course_code,
                 c1.title AS course_title,
+                c2.course_code AS prerequisite_code,
                 c2.title AS prerequisite_title
             FROM tbl_course_prerequisite cp
             INNER JOIN tbl_course c1 ON cp.course_id = c1.course_id
-            INNER JOIN tbl_course c2 ON cp.prerequisite_course_id = c2.course_id
-            WHERE cp.is_deleted = 0 OR cp.is_deleted IS NULL
-            ORDER BY cp.course_id DESC
+            INNER JOIN tbl_course c2 ON cp.prereq_course_id = c2.course_id /* FIX: Corrected column name */
+            WHERE c1.is_deleted = 0 
+              AND c2.is_deleted = 0 
+            ORDER BY cp.prerequisite_id DESC
         ";
 
         $result = $conn->query($query);

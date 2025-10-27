@@ -9,7 +9,6 @@
 <div class="container">
     <h1>Course Prerequisite Maintenance</h1>
 
-    <!-- Form -->
     <div class="form-container">
         <input type="hidden" id="original_course_id">
         <input type="hidden" id="original_prereq_id">
@@ -31,7 +30,6 @@
         </div>
     </div>
 
-    <!-- Search and Export -->
     <div class="table-actions search-export">
         <input type="text" id="searchInput" placeholder="Search course code or prerequisite">
         <div class="export-buttons">
@@ -40,15 +38,15 @@
         </div>
     </div>
 
-    <!-- Table -->
     <div class="table-container">
         <table id="coursePrereqTable">
             <thead>
             <tr>
+                <th data-column="prerequisite_id">Prereq ID <span class="sort-arrow">↕</span></th>
                 <th data-column="course_code">Course Code <span class="sort-arrow">↕</span></th>
-                <th data-column="course_name">Course Name <span class="sort-arrow">↕</span></th>
-                <th data-column="prereq_code">Prerequisite Code <span class="sort-arrow">↕</span></th>
-                <th data-column="prereq_name">Prerequisite Name <span class="sort-arrow">↕</span></th>
+                <th data-column="course_title">Course Title <span class="sort-arrow">↕</span></th>
+                <th data-column="prerequisite_code">Prerequisite Code <span class="sort-arrow">↕</span></th>
+                <th data-column="prerequisite_name">Prerequisite Name <span class="sort-arrow">↕</span></th>
                 <th>Actions</th>
             </tr>
             </thead>

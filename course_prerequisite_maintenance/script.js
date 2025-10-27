@@ -19,13 +19,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // Load dropdown courses
 function loadCourses() {
-    fetch("http://localhost/dashboard/MaintenanceModule/course_maintenance/php/get_course.php")
+    // UPDATED URL: Changed from get_course.php to fetch_course.php
+    fetch("http://localhost/dashboard/MaintenanceModule/course_prerequisite_maintenance/php/fetch_course.php")
         .then(res => res.json())
         .then(data => {
             const courseSelect = document.getElementById("course_id");
             const prereqSelect = document.getElementById("prereq_course_id");
             courseSelect.innerHTML = "";
             prereqSelect.innerHTML = "";
+
+            // Add default empty option for better UX
+            courseSelect.appendChild(document.createElement("option")).textContent = "-- Select Course --";
+            prereqSelect.appendChild(document.createElement("option")).textContent = "-- Select Prerequisite --";
+
 
             data.forEach(course => {
                 const option1 = document.createElement("option");
@@ -52,7 +58,8 @@ function loadPrereqList() {
             // ✅ Check if data is an array
             if (!Array.isArray(data) || data.length === 0) {
                 const tr = document.createElement("tr");
-                tr.innerHTML = `<td colspan="5" class="no-data">No prerequisites found</td>`;
+                // Colspan adjusted to 6 for the new column (Prereq ID)
+                tr.innerHTML = `<td colspan="6" class="no-data">No prerequisites found</td>`;
                 tbody.appendChild(tr);
 
                 // Log error if it's not an array
@@ -65,9 +72,10 @@ function loadPrereqList() {
             data.forEach(item => {
                 const tr = document.createElement("tr");
                 tr.innerHTML = `
-                    <td>${item.course_id}</td>
+                    <td>${item.prerequisite_id}</td>
+                    <td>${item.course_code}</td>
                     <td>${item.course_title}</td>
-                    <td>${item.prerequisite_course_id}</td>
+                    <td>${item.prerequisite_code}</td>
                     <td>${item.prerequisite_title}</td>
                     <td class="actions">
                         <button class="edit-btn" onclick="editPrerequisite(${item.course_id}, ${item.prerequisite_course_id})">Edit</button>
@@ -85,6 +93,12 @@ function loadPrereqList() {
 function addPrerequisite() {
     const course_id = document.getElementById("course_id").value;
     const prereq_id = document.getElementById("prereq_course_id").value;
+    
+    if (course_id === "" || prereq_id === "" || course_id.includes("Select Course") || prereq_id.includes("Select Prerequisite")) {
+        alert("Please select both a Course and a Prerequisite Course.");
+        return;
+    }
+    
     if (course_id === prereq_id) {
         alert("A course cannot be its own prerequisite.");
         return;
@@ -159,6 +173,7 @@ function deletePrerequisite(course_id, prereq_id) {
 
 // Reset form
 function resetForm() {
+    // Resetting to the first option (which should be the "-- Select" one)
     document.getElementById("course_id").selectedIndex = 0;
     document.getElementById("prereq_course_id").selectedIndex = 0;
     document.getElementById("original_course_id").value = "";
@@ -175,9 +190,13 @@ function filterTable() {
 
     let visible = false;
     rows.forEach(row => {
-        const course = row.cells[1].textContent.toLowerCase();
-        const prereq = row.cells[3].textContent.toLowerCase();
-        if (course.includes(filter) || prereq.includes(filter)) {
+        // Index 1: Course Code
+        // Index 3: Prereq Code
+        const course_code = row.cells[1].textContent.toLowerCase();
+        const prereq_code = row.cells[3].textContent.toLowerCase();
+        
+        // Search by course code OR prerequisite code
+        if (course_code.includes(filter) || prereq_code.includes(filter)) { 
             row.style.display = "";
             visible = true;
         } else {
@@ -185,12 +204,13 @@ function filterTable() {
         }
     });
 
-    if (!visible && !tbody.querySelector(".no-data")) {
+    // Colspan adjusted to 6 for the new column (Prereq ID)
+    const noDataRow = tbody.querySelector(".no-data");
+    if (!visible && !noDataRow) {
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td colspan="5" class="no-data">No matches found</td>`;
+        tr.innerHTML = `<td colspan="6" class="no-data">No matches found</td>`;
         tbody.appendChild(tr);
-    } else if (visible) {
-        const noData = tbody.querySelector(".no-data");
-        if (noData) noData.remove();
+    } else if (visible && noDataRow) {
+        noDataRow.remove();
     }
 }
