@@ -116,24 +116,25 @@ function renderPagination() {
   const infoContainer = document.getElementById('pagination-info');
   controlsContainer.innerHTML = '';
 
-  if (totalPages <= 1) {
-    infoContainer.textContent = `Total: ${totalRecords} records`;
+  if (totalRecords === 0) {
+    infoContainer.textContent = "No records found.";
     return;
   }
 
-  // Calculate start and end indices for display
   const startRecord = (currentPage - 1) * recordsPerPage + 1;
   const endRecord = Math.min(currentPage * recordsPerPage, totalRecords);
-  
+
   infoContainer.textContent = `Showing ${startRecord} to ${endRecord} of ${totalRecords} records (Page ${currentPage} of ${totalPages})`;
 
-  // Previous Button
+  if (totalPages <= 1) return;
+
   const prevBtn = document.createElement('button');
   prevBtn.textContent = '« Previous';
   prevBtn.disabled = currentPage === 1;
+  prevBtn.classList.add('page-button', 'prev-next-btn');
   prevBtn.onclick = () => goToPage(currentPage - 1);
   controlsContainer.appendChild(prevBtn);
-  // Page Buttons
+
   const maxPagesToShow = 5;
   let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
   let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
@@ -145,25 +146,26 @@ function renderPagination() {
   for (let i = startPage; i <= endPage; i++) {
     const pageBtn = document.createElement('button');
     pageBtn.textContent = i;
-    pageBtn.classList.add('page-btn');
+    pageBtn.classList.add('page-button');
     if (i === currentPage) {
-        pageBtn.classList.add('active');
-        pageBtn.disabled = true;
+      pageBtn.classList.add('active');
+      pageBtn.disabled = true;
     }
     pageBtn.onclick = () => goToPage(i);
     controlsContainer.appendChild(pageBtn);
   }
 
-  // Next Button
   const nextBtn = document.createElement('button');
   nextBtn.textContent = 'Next »';
   nextBtn.disabled = currentPage === totalPages;
+  nextBtn.classList.add('page-button', 'prev-next-btn');
   nextBtn.onclick = () => goToPage(currentPage + 1);
   controlsContainer.appendChild(nextBtn);
 }
 
 function goToPage(page) {
-  if (page < 1 || page > Math.ceil(totalRecords / recordsPerPage)) return;
+  const totalPages = Math.ceil(totalRecords / recordsPerPage);
+  if (page < 1 || page > totalPages) return;
   currentPage = page;
   const query = document.getElementById("search").value.trim();
   loadStudents(query, currentPage, recordsPerPage);
