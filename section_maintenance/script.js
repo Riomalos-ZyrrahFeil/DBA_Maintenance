@@ -4,6 +4,11 @@ let currentSort = { column: "section_id", direction: "asc" }; // default sort
 const modal = document.getElementById("sectionModal");
 const modalTitle = document.querySelector(".modal-header h2");
 
+// 🆕 PAGINATION STATE
+let currentPage = 1;
+const recordsPerPage = 10;
+let totalRecords = 0;
+
 // ===== Modal Control =====
 function openModal() {
   modal.style.display = "flex";
@@ -38,18 +43,29 @@ function loadDropdowns() {
 }
 
 // ===== Load Sections =====
-function loadSections(query = "") {
+function loadSections(query = "", page = currentPage, limit = recordsPerPage) {
   const sortBy = currentSort.column;
   const order = currentSort.direction;
 
-  fetch(`php/get_section.php?search=${encodeURIComponent(query)}&sort_by=${sortBy}&order=${order}`)
-    .then(res => res.json())
-    .then(data => {
-      sections = data;
-      displaySections(sections);
-      updateSortIndicators();
-    })
-    .catch(() => alert("⚠️ Failed to load sections. Please refresh the page."));
+  fetch(`php/get_section.php?search=${encodeURIComponent(query)}&sort_by=${sortBy}&order=${order}&page=${page}&limit=${limit}`)
+    .then(res => res.json())
+    .then(result => {
+        // Handle new paginated response structure
+        sections = result.data || [];
+        totalRecords = result.total_records || 0;
+        currentPage = result.current_page || 1;
+
+        displaySections(sections);
+        updateSortIndicators();
+        renderPagination(); // Render controls after data is loaded
+    })
+    .catch((err) => {
+        console.error("Failed to load sections:", err);
+        const tbody = document.querySelector("#sectionTable tbody");
+        tbody.innerHTML = `<tr><td class="no-data">⚠️ Failed to load sections. Check console.</td></tr>`;
+        document.getElementById('pagination-info').textContent = '';
+        document.getElementById('pagination-controls').innerHTML = '';
+    });
 }
 
 // ===== Display Sections =====
@@ -77,8 +93,8 @@ function displaySections(list) {
         <td>${sec.end_time}</td>
         <td>${sec.max_capacity}</td>
         <td>
-          <button onclick="editSection(${sec.section_id})">Edit</button>
-          <button onclick="deleteSection(${sec.section_id})">Delete</button>
+          <button class="editBtn" onclick="editSection(${sec.section_id})">Edit</button>
+          <button class="deleteBtn" onclick="deleteSection(${sec.section_id})">Delete</button>
         </td>
       </tr>
     `;
@@ -132,6 +148,7 @@ function saveSection() {
     .then(resp => {
       if (resp.status === "success") {
         alert("✅ Section added successfully!");
+        currentPage = 1;
         loadSections();
         resetForm();
         closeModal();
@@ -144,27 +161,34 @@ function saveSection() {
 
 // ===== Edit Section =====
 function editSection(id) {
-  const sec = sections.find(s => s.section_id == id);
-  if (!sec) return;
+  const sec = sections.find(s => s.section_id == id);
+  if (!sec) {
+        alert("Section data not found in the current list.");
+        return;
+    }
 
-  document.getElementById("section_id").value = sec.section_id;
-  document.getElementById("course_id").value = sec.course_id;
-  document.getElementById("term_id").value = sec.term_id;
-  document.getElementById("instructor_id").value = sec.instructor_id;
-  document.getElementById("room_id").value = sec.room_id;
-  document.getElementById("section_code").value = sec.section_code;
-  document.getElementById("year").value = sec.year;
-  document.getElementById("day_pattern").value = sec.day_pattern;
-  document.getElementById("start_time").value = sec.start_time;
-  document.getElementById("end_time").value = sec.end_time;
-  document.getElementById("max_capacity").value = sec.max_capacity;
+  document.getElementById("section_id").value = sec.section_id;
+  // Use the IDs fetched in the PHP script for dropdowns
+  document.getElementById("course_id").value = sec.course_id; 
+  document.getElementById("term_id").value = sec.term_id;
+  document.getElementById("instructor_id").value = sec.instructor_id;
+  document.getElementById("room_id").value = sec.room_id;
+  document.getElementById("section_code").value = sec.section_code;
+  document.getElementById("year").value = sec.year;
+  document.getElementById("day_pattern").value = sec.day_pattern;
+  
+  // Time parsing is tricky; use raw values if available, or try to format
+  document.getElementById("start_time").value = sec.start_time.substring(0, 5);
+  document.getElementById("end_time").value = sec.end_time.substring(0, 5);
+  
+  document.getElementById("max_capacity").value = sec.max_capacity;
 
-  document.getElementById("saveBtn").style.display = "none";
-  document.getElementById("updateBtn").style.display = "inline-block";
-  document.getElementById("cancelBtn").style.display = "inline-block";
+  document.getElementById("saveBtn").style.display = "none";
+  document.getElementById("updateBtn").style.display = "inline-block";
+  document.getElementById("cancelBtn").style.display = "inline-block";
 
-  modalTitle.textContent = "Edit Section";
-  openModal();
+  modalTitle.textContent = "Edit Section";
+  openModal();
 }
 
 // ===== Update Section =====
@@ -196,6 +220,7 @@ function deleteSection(id) {
     .then(resp => {
       if (resp.status === "success") {
         alert("✅ Section deleted successfully!");
+        currentPage = 1;
         loadSections();
       } else {
         alert("⚠️ Error deleting section: " + resp.message);
@@ -207,6 +232,7 @@ function deleteSection(id) {
 // ===== Search Sections =====
 function searchSections(e) {
   const query = e.target.value.trim().toLowerCase();
+  currentPage = 1;
   loadSections(query);
 }
 
@@ -218,6 +244,7 @@ function toggleSort(column) {
     currentSort.column = column;
     currentSort.direction = "asc";
   }
+  currentPage = 1;
   const searchInput = document.getElementById("searchInput").value.trim();
   loadSections(searchInput);
 }
@@ -237,6 +264,66 @@ function updateSortIndicators() {
       th.classList.remove("active-sort");
     }
   });
+}
+
+// ===== PAGINATION FUNCTIONS (New) =====
+function renderPagination() {
+    const totalPages = Math.ceil(totalRecords / recordsPerPage);
+    const controlsContainer = document.getElementById('pagination-controls');
+    const infoContainer = document.getElementById('pagination-info');
+    controlsContainer.innerHTML = '';
+
+    if (totalPages <= 1) {
+        infoContainer.textContent = totalRecords > 0 ? `Total: ${totalRecords} records` : '';
+        return;
+    }
+
+    const startRecord = (currentPage - 1) * recordsPerPage + 1;
+    const endRecord = Math.min(currentPage * recordsPerPage, totalRecords);
+    
+    infoContainer.textContent = `Showing ${startRecord} to ${endRecord} of ${totalRecords} records (Page ${currentPage} of ${totalPages})`;
+
+    // Previous Button
+    const prevBtn = document.createElement('button');
+    prevBtn.textContent = '« Previous';
+    prevBtn.disabled = currentPage === 1;
+    prevBtn.onclick = () => goToPage(currentPage - 1);
+    controlsContainer.appendChild(prevBtn);
+
+    // Page number links
+    const maxPagesToShow = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+    let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+
+    if (endPage - startPage + 1 < maxPagesToShow) {
+        startPage = Math.max(1, endPage - maxPagesToShow + 1);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+        const pageBtn = document.createElement('button');
+        pageBtn.textContent = i;
+        pageBtn.classList.add('page-btn');
+        if (i === currentPage) {
+            pageBtn.classList.add('active');
+            pageBtn.disabled = true;
+        }
+        pageBtn.onclick = () => goToPage(i);
+        controlsContainer.appendChild(pageBtn);
+    }
+
+    // Next Button
+    const nextBtn = document.createElement('button');
+    nextBtn.textContent = 'Next »';
+    nextBtn.disabled = currentPage === totalPages;
+    nextBtn.onclick = () => goToPage(currentPage + 1);
+    controlsContainer.appendChild(nextBtn);
+}
+
+function goToPage(page) {
+    if (page < 1 || page > Math.ceil(totalRecords / recordsPerPage)) return;
+    currentPage = page;
+    const query = document.getElementById("searchInput").value.trim();
+    loadSections(query, currentPage, recordsPerPage);
 }
 
 // ===== Export =====

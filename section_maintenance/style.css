@@ -12,6 +12,7 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  padding: 30px;
 }
 
 /* ===== HEADER ===== */
@@ -39,7 +40,7 @@ h1 {
 
 /* ===== CONTAINER ===== */
 .container {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 1rem auto;
   padding: 1rem;
 }
@@ -343,4 +344,59 @@ footer {
   text-align: center;
   font-style: italic;
   color: #666;
+}
+
+#sectionTable tbody td:last-child {
+  display: flex; /* Makes the buttons sit side-by-side */
+  justify-content: center; /* Centers them in the cell */
+  align-items: center;
+  gap: 8px; /* Space between buttons */
+  padding: 8px 5px;
+  min-width: 120px; /* Ensures the column has enough space */
+}
+
+/* PAGINATION STYLES */
+.pagination-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+  padding: 10px 0;
+  border-top: 1px solid #ddd;
+}
+
+#pagination-info {
+  font-size: 0.9rem;
+  color: #666;
+  font-weight: 500;
+}
+
+#pagination-controls button {
+  background-color: #fff;
+  color: #800000;
+  border: 1px solid #800000;
+  padding: 8px 15px;
+  margin: 0 4px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+#pagination-controls button:hover:not(:disabled) {
+  background-color: #800000;
+  color: #fff;
+}
+
+#pagination-controls button.active {
+  background-color: #800000;
+  color: #fff;
+  border-color: #800000;
+  font-weight: bold;
+}
+
+#pagination-controls button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  background-color: #f1f1f1;
+  color: #999;
 }
