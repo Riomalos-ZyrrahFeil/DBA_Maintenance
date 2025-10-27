@@ -1,10 +1,16 @@
 let courseList = [];
 let currentSort = { column: "course_id", direction: "asc" };
+let currentPage = 1;
+const rowsPerPage = 10;
+let totalPages = 1;
+let totalRecords = 0;
 
 document.addEventListener("DOMContentLoaded", () => {
   const courseTableBody = document.querySelector("#courseTable tbody");
   const searchInput = document.getElementById("search");
-  let currentSort = { column: "course_id", direction: "desc" };
+  
+  const paginationControlsContainer = document.querySelector('.pagination-controls');
+  const paginationInfoContainer = document.querySelector('.pagination-info');
 
   const saveBtn = document.getElementById("saveBtn");
   const updateBtn = document.getElementById("updateBtn");
@@ -19,55 +25,140 @@ document.addEventListener("DOMContentLoaded", () => {
     units: document.getElementById("units"),
   };
 
-  // ==========================
-  // Load Courses
-  // ==========================
+  async function fetchJSON(url) {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      return await res.json();
+    } catch (err) {
+      console.error(`❌ Fetch error for ${url}:`, err);
+      // Return structured empty response for list fetches
+      if (url.includes('get_course.php') && !url.includes('id=')) {
+        return { data: [], total_records: 0 };
+      }
+      return [];
+    }
+  }
+
   async function loadCourses(query = "") {
     const sortBy = currentSort.column;
     const order = currentSort.direction;
+    const page = currentPage;
+    const limit = rowsPerPage;
 
     try {
-      const res = await fetch(
-        `php/get_course.php?search=${encodeURIComponent(query)}&sort_by=${sortBy}&order=${order}`
-      );
-      const data = await res.json();
+      const url = `php/get_course.php?search=${encodeURIComponent(query)}&sort_by=${sortBy}&order=${order}&page=${page}&limit=${limit}`;
+      
+      const response = await fetchJSON(url);
+      const data = response.data || [];
+      totalRecords = response.total_records || 0;
+      
       courseList = data;
-
       courseTableBody.innerHTML = "";
+      totalPages = Math.ceil(totalRecords / rowsPerPage);
+      
+      if (currentPage > totalPages && totalPages > 0) {
+        currentPage = totalPages;
+        return loadCourses(query);
+      }
+      if (currentPage === 0 && totalRecords > 0) {
+        currentPage = 1;
+      }
+
 
       if (!Array.isArray(data) || data.length === 0) {
         courseTableBody.innerHTML = `<tr><td colspan="7" class="no-data">No courses found</td></tr>`;
-        updateSortIndicators();
-        return;
+      } else {
+        data.forEach((course) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${course.course_id}</td>
+            <td>${course.course_code}</td>
+            <td>${course.title}</td>
+            <td>${course.lecture_hours}</td>
+            <td>${course.lab_hours}</td>
+            <td>${course.units}</td>
+            <td class="actions">
+              <button class="action-btn edit-btn" data-id="${course.course_id}">Edit</button>
+              <button class="action-btn delete-btn" data-id="${course.course_id}">Delete</button>
+            </td>
+          `;
+          courseTableBody.appendChild(tr);
+        });
       }
-
-      data.forEach((course) => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${course.course_id}</td>
-          <td>${course.course_code}</td>
-          <td>${course.title}</td>
-          <td>${course.lecture_hours}</td>
-          <td>${course.lab_hours}</td>
-          <td>${course.units}</td>
-          <td class="actions">
-            <button class="action-btn edit-btn" data-id="${course.course_id}">Edit</button>
-            <button class="action-btn delete-btn" data-id="${course.course_id}">Delete</button>
-          </td>
-        `;
-        courseTableBody.appendChild(tr);
-      });
 
       attachRowEvents();
       updateSortIndicators();
+      renderPaginationControls();
+
     } catch (err) {
       console.error("Error loading courses:", err);
     }
   }
 
-  // ==========================
-  // Sorting
-  // ==========================
+  function renderPaginationControls() {
+    paginationControlsContainer.innerHTML = '';
+    paginationInfoContainer.innerHTML = '';
+    
+    if (totalRecords === 0) {
+      paginationInfoContainer.textContent = "No records found.";
+      return;
+    }
+
+    const start = (currentPage - 1) * rowsPerPage + 1;
+    const end = Math.min(currentPage * rowsPerPage, totalRecords);
+    
+    paginationInfoContainer.textContent = `Showing ${start} to ${end} of ${totalRecords} records (Page ${currentPage} of ${totalPages})`;
+
+    if (totalPages <= 1) return;
+
+    const prevBtn = document.createElement('button');
+    prevBtn.textContent = '« Previous';
+    prevBtn.disabled = currentPage === 1;
+    prevBtn.classList.add('page-button', 'prev-next-btn');
+    prevBtn.onclick = () => {
+        if (currentPage > 1) {
+          currentPage--;
+          loadCourses(searchInput.value.trim());
+        }
+    };
+    paginationControlsContainer.appendChild(prevBtn);
+
+    const maxButtonsToShow = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxButtonsToShow / 2));
+    let endPage = Math.min(totalPages, startPage + maxButtonsToShow - 1);
+
+    if (endPage - startPage + 1 < maxButtonsToShow) {
+      startPage = Math.max(1, endPage - maxButtonsToShow + 1);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+      const numBtn = document.createElement('button');
+      numBtn.textContent = i;
+      numBtn.classList.add('page-button');
+      if (i === currentPage) {
+        numBtn.classList.add('active');
+      }
+      numBtn.onclick = () => {
+        currentPage = i;
+        loadCourses(searchInput.value.trim());
+      };
+      paginationControlsContainer.appendChild(numBtn);
+    }
+
+    const nextBtn = document.createElement('button');
+    nextBtn.textContent = 'Next »';
+    nextBtn.disabled = currentPage === totalPages;
+    nextBtn.classList.add('page-button', 'prev-next-btn');
+    nextBtn.onclick = () => {
+      if (currentPage < totalPages) {
+        currentPage++;
+        loadCourses(searchInput.value.trim());
+      }
+    };
+    paginationControlsContainer.appendChild(nextBtn);
+  }
+
   function toggleSort(column) {
     if (currentSort.column === column) {
       currentSort.direction = currentSort.direction === "asc" ? "desc" : "asc";
@@ -75,6 +166,7 @@ document.addEventListener("DOMContentLoaded", () => {
       currentSort.column = column;
       currentSort.direction = "asc";
     }
+    currentPage = 1;
     const searchValue = searchInput.value.trim();
     loadCourses(searchValue);
   }
@@ -87,24 +179,20 @@ document.addEventListener("DOMContentLoaded", () => {
       th.setAttribute("data-label", label);
 
       if (isActive) {
-        th.innerHTML = `${label} ${currentSort.direction === "asc" ? "▲" : "▼"}`;
+          th.innerHTML = `${label} ${currentSort.direction === "asc" ? "▲" : "▼"}`;
       } else {
-        th.innerHTML = `${label} ↕`;
+          th.innerHTML = `${label} ↕`;
       }
     });
   }
 
-  // ==========================
-  // CRUD + UI Logic
-  // ==========================
   function attachRowEvents() {
-    // Edit button
     document.querySelectorAll(".edit-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
+      btn.addEventListener("click", async () => {
         const id = btn.getAttribute("data-id");
-        fetch(`php/get_course.php?id=${id}`)
-          .then((res) => res.json())
-          .then((course) => {
+        try {
+          const course = await fetchJSON(`php/get_course.php?id=${id}`); 
+          if (course) {
             courseFormFields.course_id.value = course.course_id;
             courseFormFields.course_code.value = course.course_code;
             courseFormFields.title.value = course.title;
@@ -115,11 +203,13 @@ document.addEventListener("DOMContentLoaded", () => {
             saveBtn.style.display = "none";
             updateBtn.style.display = "inline-block";
             cancelBtn.style.display = "inline-block";
-          });
+            }
+        } catch (err) {
+          console.error("Error fetching course for edit:", err);
+        }
       });
     });
 
-    // Delete button (now calls function)
     document.querySelectorAll(".delete-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
         const id = btn.getAttribute("data-id");
@@ -128,9 +218,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ==========================
-  // Delete Course Function
-  // ==========================
   function deleteCourse(id) {
     if (!confirm("Are you sure you want to delete this course?")) return;
 
@@ -139,7 +226,10 @@ document.addEventListener("DOMContentLoaded", () => {
       .then((data) => {
         alert(data.message);
         if (data.status === "success") {
-          loadCourses();
+          if (courseList.length === 1 && currentPage > 1) {
+            currentPage--;
+          }
+          loadCourses(searchInput.value.trim());
         }
       })
       .catch((err) => {
@@ -147,9 +237,6 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   }
 
-  // ==========================
-  // ADD COURSE
-  // ==========================
   saveBtn.addEventListener("click", () => {
     const formData = new FormData();
     formData.append("course_code", courseFormFields.course_code.value);
@@ -164,15 +251,13 @@ document.addEventListener("DOMContentLoaded", () => {
         alert(data.message);
         if (data.status === "success") {
           clearForm();
+          currentPage = 1;
           loadCourses();
         }
       })
       .catch((err) => console.error("Error:", err));
   });
 
-  // ==========================
-  // UPDATE COURSE
-  // ==========================
   updateBtn.addEventListener("click", () => {
     const formData = new FormData();
     formData.append("course_id", courseFormFields.course_id.value);
@@ -190,16 +275,13 @@ document.addEventListener("DOMContentLoaded", () => {
       .then((data) => {
         alert(data.message);
         if (data.status === "success") {
-          loadCourses();
+          loadCourses(searchInput.value.trim()); 
           clearForm();
         }
       })
       .catch((err) => console.error("Error:", err));
   });
 
-  // ==========================
-  // CANCEL BUTTON
-  // ==========================
   cancelBtn.addEventListener("click", clearForm);
 
   function clearForm() {
@@ -209,41 +291,11 @@ document.addEventListener("DOMContentLoaded", () => {
     cancelBtn.style.display = "inline-block";
   }
 
-  // ==========================
-  // Search functionality
-  // ==========================
   searchInput.addEventListener("keyup", () => {
-    const filter = searchInput.value.toLowerCase();
-    const tbody = document.querySelector("#courseTable tbody");
-    const rows = Array.from(tbody.querySelectorAll("tr")).filter(
-      (row) => !row.classList.contains("no-data")
-    );
-
-    let visibleCount = 0;
-
-    rows.forEach((row) => {
-      if (row.textContent.toLowerCase().includes(filter)) {
-        row.style.display = "";
-        visibleCount++;
-      } else {
-        row.style.display = "none";
-      }
-    });
-
-    const existingMsg = tbody.querySelector(".no-data");
-    if (existingMsg) existingMsg.remove();
-
-    if (visibleCount === 0) {
-      const msgRow = document.createElement("tr");
-      msgRow.classList.add("no-data");
-      msgRow.innerHTML = `<td colspan="7">No courses found</td>`;
-      tbody.appendChild(msgRow);
-    }
+    currentPage = 1;
+    loadCourses(searchInput.value.trim());
   });
 
-  // ==========================
-  // Sort Event Listeners
-  // ==========================
   document.querySelectorAll("#courseTable thead th[data-column]").forEach((th) => {
     th.addEventListener("click", () => {
       const column = th.getAttribute("data-column");
@@ -251,9 +303,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // ==========================
-  // Initial Load
-  // ==========================
   loadCourses();
 });
 
