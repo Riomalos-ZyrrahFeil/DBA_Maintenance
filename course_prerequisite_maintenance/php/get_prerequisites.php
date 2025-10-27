@@ -6,7 +6,6 @@ $course_id = isset($_GET['course_id']) ? $_GET['course_id'] : null;
 
 try {
     if ($course_id) {
-        // ✅ Get prerequisites for a specific course (excluding deleted)
         $stmt = $conn->prepare("
             SELECT 
                 cp.prerequisite_id,
@@ -37,7 +36,6 @@ try {
         echo json_encode($prerequisites);
         $stmt->close();
     } else {
-        // ✅ Get all prerequisites (excluding deleted)
         $query = "
             SELECT 
                 cp.prerequisite_id,

@@ -17,9 +17,6 @@ if (!in_array($sort_by, $valid_columns)) {
     $sort_by = 'course_id';
 }
 
-// =========================================================
-// 1. FETCH SINGLE COURSE (For Edit Forms - Highest Priority)
-// =========================================================
 if ($id > 0) {
     $stmt = $conn->prepare("
         SELECT * FROM tbl_course 
@@ -37,11 +34,6 @@ if ($id > 0) {
     exit;
 }
 
-
-// =========================================================
-// 2. QUICK FETCH (For dropdowns/Prerequisite Module)
-//    This block executes when 'page' AND 'limit' are NOT provided.
-// =========================================================
 if (!isset($_GET['page']) && !isset($_GET['limit'])) {
     $sql_basic = "SELECT course_id, course_code, title FROM tbl_course WHERE is_deleted = 0 ORDER BY course_code ASC";
     
@@ -51,16 +43,10 @@ if (!isset($_GET['page']) && !isset($_GET['limit'])) {
         $courses_basic[] = $row;
     }
     
-    // Returns a simple array of course objects, suitable for JavaScript dropdown population.
     echo json_encode($courses_basic);
-    exit; // STOP SCRIPT HERE
+    exit; 
 }
 
-
-// =========================================================
-// 3. PAGINATED FETCH (For Course Maintenance Table)
-// =========================================================
-// Sanitize search term
 $safe_search = $conn->real_escape_string($search); 
 
 $whereClause = "WHERE is_deleted = 0 AND (course_code LIKE ? OR title LIKE ?)";
@@ -68,7 +54,6 @@ $searchParam = "%{$safe_search}%";
 $searchParams = [$searchParam, $searchParam];
 $paramTypes = "ss";
 
-// Count Query
 $countSql = "SELECT COUNT(*) as total FROM tbl_course $whereClause";
 $totalRecords = 0;
 
@@ -79,7 +64,6 @@ $resultCount = $stmtCount->get_result();
 $totalRecords = $resultCount->fetch_assoc()['total'];
 $stmtCount->close();
 
-// Data Query
 $dataSql = "
     SELECT * FROM tbl_course 
     $whereClause
@@ -88,7 +72,6 @@ $dataSql = "
 ";
 
 $courses = [];
-// Ensure $limit and $offset are integers for binding
 $finalLimit = intval($limit);
 $finalOffset = intval($offset);
 
@@ -109,5 +92,4 @@ echo json_encode([
     'data' => $courses,
     'total_records' => $totalRecords
 ]);
-// Note: $conn->close() is typically done by the included 'db.php' or when the script exits.
 ?>
