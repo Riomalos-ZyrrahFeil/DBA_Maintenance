@@ -12,7 +12,6 @@
     </header>
 
     <div class="container">
-        <!-- Table Controls -->
         <div class="table-controls">
             <input type="text" id="searchInput" placeholder="Search enrollments...">
             <div>
@@ -22,31 +21,26 @@
             </div>
         </div>
 
-        <!-- Enrollment Table -->
         <div class="table-container">
             <table id="enrollmentTable">
                 <thead>
                 <tr>
                     <th data-column="enrollment_id">Enrollment ID</th>
-                    <th data-column="student_id">Student ID</th>
-                    <th data-column="section_id">Section ID</th>
-                    <th data-column="date_enrolled">Date Enrolled</th>
+                    <th data-column="student_name">Student Name</th> <th data-column="section_code">Section Code</th> <th data-column="date_enrolled">Date Enrolled</th>
                     <th data-column="status">Status</th>
                     <th data-column="letter_grade">Letter Grade</th>
                     <th>Actions</th>
                 </tr>
                 </thead>
                 <tbody>
-                    <!-- Rows will be dynamically populated via JS -->
-                </tbody>
+                    </tbody>
             </table>
 
             </div>
                 <div class="pagination-controls"></div> 
-            </div>
+            </div>
     </div>
 
-    <!-- MODAL -->
     <div class="modal" id="enrollmentModal">
         <div class="modal-content">
             <span class="close-modal" id="closeModalBtn">&times;</span>

@@ -46,7 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // =================== Load Students ===================
+    // =================== Load Students (Unchanged) ===================
     async function loadStudents() {
         const data = await fetchJSON('php/fetch_students.php');
         studentSelect.innerHTML = '<option value="">Select Student</option>';
@@ -64,7 +64,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // =================== Load Enrollments (Updated for Pagination) ===================
+    // =================== Load Enrollments (Updated for Display) ===================
     async function loadEnrollments(query = "") {
         const { column, direction } = currentSort;
         const page = currentPage;
@@ -86,14 +86,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 enrollmentTableBody.innerHTML += `
                     <tr>
                         <td>${e.enrollment_id}</td>
-                        <td>${e.student_id}</td>
-                        <td>${e.section_id}</td>
-                        <td>${e.date_enrolled}</td>
+                        <td>${e.student_name}</td>  <td>${e.section_code}</td>  <td>${e.date_enrolled}</td>
                         <td>${e.status}</td>
                         <td>${e.letter_grade || ''}</td>
                         <td>
-                            <button class="action-btn edit-btn" onclick="editEnrollment(${e.enrollment_id})">✏️ Edit</button>
-                            <button class="action-btn delete-btn" onclick="deleteEnrollment(${e.enrollment_id})">🗑 Delete</button>
+                            <button class="action-btn edit-btn" onclick="editEnrollment(${e.enrollment_id})">Edit</button>
+                            <button class="action-btn delete-btn" onclick="deleteEnrollment(${e.enrollment_id})">Delete</button>
                         </td>
                     </tr>
                 `;
@@ -104,7 +102,7 @@ document.addEventListener("DOMContentLoaded", () => {
         renderPaginationControls();
     }
 
-    // =================== Pagination Controls ===================
+    // =================== Pagination Controls (Unchanged) ===================
     function renderPaginationControls() {
         paginationContainer.innerHTML = '';
         if (totalPages <= 1) return;
@@ -140,7 +138,7 @@ document.addEventListener("DOMContentLoaded", () => {
         paginationContainer.appendChild(nextBtn);
     }
 
-    // =================== Sorting ===================
+    // =================== Sorting (Unchanged logic, uses new data-column names) ===================
     document.querySelectorAll('#enrollmentTable thead th[data-column]').forEach(th => {
         th.addEventListener('click', () => toggleSort(th.getAttribute('data-column')));
     });
@@ -172,13 +170,13 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // =================== Search ===================
+    // =================== Search (Unchanged) ===================
     searchInput.addEventListener('input', e => {
         currentPage = 1;
         loadEnrollments(e.target.value.trim());
     });
 
-    // =================== Save ===================
+    // =================== Save (Unchanged) ===================
     saveBtn.addEventListener('click', async () => {
         const payload = getFormData();
         if (!payload) return;
@@ -195,7 +193,7 @@ document.addEventListener("DOMContentLoaded", () => {
         closeModal();
     });
 
-    // =================== Update ===================
+    // =================== Update (Unchanged) ===================
     updateBtn.addEventListener('click', async () => {
         const payload = getFormData();
         if (!payload) return;
@@ -215,7 +213,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     cancelBtn.addEventListener('click', closeModal);
 
-    // =================== Form Helpers ===================
+    // =================== Form Helpers (Unchanged) ===================
     function clearForm() {
         document.getElementById('enrollment_id').value = '';
         studentSelect.value = '';
@@ -243,8 +241,10 @@ document.addEventListener("DOMContentLoaded", () => {
         return { student_id, section_id, date_enrolled, status, letter_grade };
     }
 
-    // =================== Edit ===================
+    // =================== Edit (Unchanged) ===================
     window.editEnrollment = async (id) => {
+        // We still fetch the enrollment by ID, and it returns student_id and section_id
+        // which are used to pre-select the dropdowns in the modal.
         const data = await fetchJSON(`php/get_enrollment.php?id=${id}`);
         if (!data) return;
 
@@ -261,7 +261,7 @@ document.addEventListener("DOMContentLoaded", () => {
         modal.style.display = 'flex';
     };
 
-    // =================== Delete ===================
+    // =================== Delete (Unchanged) ===================
     window.deleteEnrollment = async (id) => {
         if (!confirm("❌ Are you sure you want to delete this enrollment?")) return;
         await fetch(`php/delete_enrollment.php?id=${id}`, { method: 'DELETE' });
@@ -274,7 +274,7 @@ document.addEventListener("DOMContentLoaded", () => {
         loadEnrollments(searchInput.value.trim());
     };
 
-    // =================== Export ===================
+    // =================== Export (Unchanged) ===================
     document.getElementById('exportExcelBtn').addEventListener('click', () => {
         window.location.href = 'php/export_excel.php';
     });
