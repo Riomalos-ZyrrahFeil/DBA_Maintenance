@@ -21,10 +21,13 @@ if (isset($_GET['id'])) {
 
 // =================== SEARCH & SORT ===================
 
-// Get search and sort parameters
 $search  = isset($_GET['search']) ? trim($conn->real_escape_string($_GET['search'])) : '';
 $sort_by = isset($_GET['sort_by']) ? $_GET['sort_by'] : 'enrollment_id';
 $order   = (isset($_GET['order']) && strtolower($_GET['order']) === 'asc') ? 'ASC' : 'DESC';
+
+$page  = isset($_GET['page']) ? intval($_GET['page']) : 1;
+$limit = isset($_GET['limit']) ? intval($_GET['limit']) : 10;
+$offset = ($page - 1) * $limit; // Calculate SQL OFFSET
 
 // Whitelist of sortable columns to prevent SQL injection
 $allowedSortColumns = ['enrollment_id', 'student_id', 'section_id', 'date_enrolled', 'status', 'letter_grade'];
@@ -32,38 +35,57 @@ if (!in_array($sort_by, $allowedSortColumns)) {
     $sort_by = 'enrollment_id';
 }
 
-// Base SQL (only active records)
-$sql = "
-    SELECT enrollment_id, student_id, section_id, date_enrolled, status, letter_grade
-    FROM tbl_enrollment
-    WHERE is_deleted = 0
-";
+$whereClause = "WHERE is_deleted = 0";
+$searchParams = [];
+$paramTypes = "";
 
-// If search is not empty, add filter
 if ($search !== '') {
     $searchLike = "%$search%";
-    $sql .= " AND (student_id LIKE ? OR section_id LIKE ? OR status LIKE ? OR letter_grade LIKE ?)";
+    $whereClause .= " AND (student_id LIKE ? OR section_id LIKE ? OR status LIKE ? OR letter_grade LIKE ?)";
+    $searchParams = [$searchLike, $searchLike, $searchLike, $searchLike];
+    $paramTypes = "ssss";
 }
 
-// Add sort order
-$sql .= " ORDER BY $sort_by $order";
+$countSql = "SELECT COUNT(*) as total FROM tbl_enrollment $whereClause";
+$totalRecords = 0;
 
-// Prepare and execute
 if ($search !== '') {
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ssss", $searchLike, $searchLike, $searchLike, $searchLike);
-    $stmt->execute();
-    $result = $stmt->get_result();
+    $stmtCount = $conn->prepare($countSql);
+    $stmtCount->bind_param($paramTypes, ...$searchParams);
+    $stmtCount->execute();
+    $resultCount = $stmtCount->get_result();
+    $totalRecords = $resultCount->fetch_assoc()['total'];
+    $stmtCount->close();
 } else {
-    $result = $conn->query($sql);
+    $resultCount = $conn->query($countSql);
+    $totalRecords = $resultCount->fetch_assoc()['total'];
 }
 
-// Fetch results
+$dataSql = "
+    SELECT enrollment_id, student_id, section_id, date_enrolled, status, letter_grade
+    FROM tbl_enrollment
+    $whereClause
+    ORDER BY $sort_by $order
+    LIMIT ? OFFSET ?
+";
+
 $enrollments = [];
-while ($row = $result->fetch_assoc()) {
+$finalParams = array_merge($searchParams, [$limit, $offset]);
+$finalTypes = $paramTypes . "ii";
+
+
+$stmtData = $conn->prepare($dataSql);
+$stmtData->bind_param($finalTypes, ...$finalParams);
+$stmtData->execute();
+$resultData = $stmtData->get_result();
+
+while ($row = $resultData->fetch_assoc()) {
     $enrollments[] = $row;
 }
+$stmtData->close();
 
-// Return as JSON
-echo json_encode($enrollments);
+echo json_encode([
+    'data' => $enrollments,
+    'total_records' => $totalRecords
+]);
 ?>

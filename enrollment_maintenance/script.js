@@ -1,9 +1,13 @@
 let enrollmentList = [];
 let currentSort = { column: "enrollment_id", direction: "asc" };
+let currentPage = 1;
+const rowsPerPage = 10;
+let totalPages = 1;
 
 document.addEventListener("DOMContentLoaded", () => {
     const enrollmentTableBody = document.querySelector('#enrollmentTable tbody');
     const searchInput = document.getElementById('searchInput');
+    const paginationContainer = document.querySelector('.pagination-controls');
 
     // Buttons
     const saveBtn = document.getElementById('saveBtn');
@@ -18,7 +22,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const closeModalBtn = document.getElementById('closeModalBtn');
 
     // =================== Modal Control ===================
-    openModalBtn.addEventListener('click', () => modal.style.display = 'flex');
+    openModalBtn.addEventListener('click', () => {
+        clearForm();
+        modal.style.display = 'flex';
+    });
     closeModalBtn.addEventListener('click', closeModal);
     window.addEventListener('click', e => { if (e.target === modal) closeModal(); });
 
@@ -35,7 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
             return await res.json();
         } catch (err) {
             console.error(`❌ Fetch error for ${url}:`, err);
-            return [];
+            return options.isList ? { data: [], total_records: 0 } : []; 
         }
     }
 
@@ -48,7 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // =================== Load Sections ===================
+    // =================== Load Sections (Unchanged) ===================
     async function loadSections() {
         const data = await fetchJSON('php/fetch_sections.php');
         sectionSelect.innerHTML = '<option value="">Select Section</option>';
@@ -57,37 +64,80 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // =================== Load Enrollments ===================
+    // =================== Load Enrollments (Updated for Pagination) ===================
     async function loadEnrollments(query = "") {
         const { column, direction } = currentSort;
-        const data = await fetchJSON(`php/get_enrollment.php?search=${encodeURIComponent(query)}&sort_by=${column}&order=${direction}`);
+        const page = currentPage;
+        const limit = rowsPerPage;
+        const url = `php/get_enrollment.php?search=${encodeURIComponent(query)}&sort_by=${column}&order=${direction}&page=${page}&limit=${limit}`;
+
+        const response = await fetchJSON(url, { isList: true });
+        const data = response.data || [];
+        const totalRecords = response.total_records || 0;
+
         enrollmentList = data;
         enrollmentTableBody.innerHTML = "";
+        totalPages = Math.ceil(totalRecords / rowsPerPage);
 
         if (!Array.isArray(data) || data.length === 0) {
             enrollmentTableBody.innerHTML = `<tr><td colspan="7" class="no-data">No enrollments found</td></tr>`;
-            updateSortIndicators();
-            return;
+        } else {
+            data.forEach(e => {
+                enrollmentTableBody.innerHTML += `
+                    <tr>
+                        <td>${e.enrollment_id}</td>
+                        <td>${e.student_id}</td>
+                        <td>${e.section_id}</td>
+                        <td>${e.date_enrolled}</td>
+                        <td>${e.status}</td>
+                        <td>${e.letter_grade || ''}</td>
+                        <td>
+                            <button class="action-btn edit-btn" onclick="editEnrollment(${e.enrollment_id})">✏️ Edit</button>
+                            <button class="action-btn delete-btn" onclick="deleteEnrollment(${e.enrollment_id})">🗑 Delete</button>
+                        </td>
+                    </tr>
+                `;
+            });
         }
 
-        data.forEach(e => {
-            enrollmentTableBody.innerHTML += `
-                <tr>
-                    <td>${e.enrollment_id}</td>
-                    <td>${e.student_id}</td>
-                    <td>${e.section_id}</td>
-                    <td>${e.date_enrolled}</td>
-                    <td>${e.status}</td>
-                    <td>${e.letter_grade || ''}</td>
-                    <td>
-                        <button class="action-btn edit-btn" onclick="editEnrollment(${e.enrollment_id})">✏️ Edit</button>
-                        <button class="action-btn delete-btn" onclick="deleteEnrollment(${e.enrollment_id})">🗑 Delete</button>
-                    </td>
-                </tr>
-            `;
-        });
-
         updateSortIndicators();
+        renderPaginationControls();
+    }
+
+    // =================== Pagination Controls ===================
+    function renderPaginationControls() {
+        paginationContainer.innerHTML = '';
+        if (totalPages <= 1) return;
+
+        // Previous Button
+        const prevBtn = document.createElement('button');
+        prevBtn.textContent = '« Previous';
+        prevBtn.disabled = currentPage === 1;
+        prevBtn.onclick = () => {
+            if (currentPage > 1) {
+                currentPage--;
+                loadEnrollments(searchInput.value.trim());
+            }
+        };
+        paginationContainer.appendChild(prevBtn);
+
+        // Page Indicator
+        const pageInfo = document.createElement('span');
+        pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+        pageInfo.className = 'page-info';
+        paginationContainer.appendChild(pageInfo);
+
+        // Next Button
+        const nextBtn = document.createElement('button');
+        nextBtn.textContent = 'Next »';
+        nextBtn.disabled = currentPage === totalPages;
+        nextBtn.onclick = () => {
+            if (currentPage < totalPages) {
+                currentPage++;
+                loadEnrollments(searchInput.value.trim());
+            }
+        };
+        paginationContainer.appendChild(nextBtn);
     }
 
     // =================== Sorting ===================
@@ -102,6 +152,7 @@ document.addEventListener("DOMContentLoaded", () => {
             currentSort.column = column;
             currentSort.direction = "asc";
         }
+        currentPage = 1;
         loadEnrollments(searchInput.value.trim());
     }
 
@@ -122,7 +173,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // =================== Search ===================
-    searchInput.addEventListener('input', e => loadEnrollments(e.target.value.trim()));
+    searchInput.addEventListener('input', e => {
+        currentPage = 1;
+        loadEnrollments(e.target.value.trim());
+    });
 
     // =================== Save ===================
     saveBtn.addEventListener('click', async () => {
@@ -136,6 +190,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         alert('✅ Enrollment added successfully!');
+        currentPage = 1;
         loadEnrollments();
         closeModal();
     });
@@ -154,7 +209,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         alert('✅ Enrollment updated successfully!');
-        loadEnrollments();
+        loadEnrollments(searchInput.value.trim());
         closeModal();
     });
 
@@ -211,7 +266,12 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!confirm("❌ Are you sure you want to delete this enrollment?")) return;
         await fetch(`php/delete_enrollment.php?id=${id}`, { method: 'DELETE' });
         alert('🗑 Enrollment deleted successfully!');
-        loadEnrollments();
+        
+        if (enrollmentList.length === 1 && currentPage > 1) {
+            currentPage--;
+        }
+        
+        loadEnrollments(searchInput.value.trim());
     };
 
     // =================== Export ===================

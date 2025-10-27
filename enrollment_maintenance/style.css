@@ -279,3 +279,42 @@ thead th[data-column]:hover {
 .close-modal:hover {
     color: #b30000;
 }
+
+/* =================== Pagination Controls (NEW for alignment) =================== */
+.pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    gap: 10px;
+}
+
+.pagination-controls button {
+    padding: 8px 15px;
+    border: 1px solid #800000;
+    border-radius: 8px;
+    background-color: #fff;
+    color: #800000;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.2s, color 0.2s;
+}
+
+.pagination-controls button:hover:not(:disabled) {
+    background-color: #800000;
+    color: #fff;
+}
+
+.pagination-controls button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+    border-color: #ccc;
+    color: #666;
+}
+
+.pagination-controls .page-info {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+    padding: 0 10px;
+}
