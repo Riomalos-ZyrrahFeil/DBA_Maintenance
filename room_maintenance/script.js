@@ -1,5 +1,10 @@
 let roomList = [];
-let currentSort = { column: "room_id", direction: "desc" }; // default sorting is descending
+let currentSort = { column: "room_id", direction: "desc" };
+let currentPage = 1;
+const rowsPerPage = 10;
+let totalPages = 1;
+let totalRecords = 0;
+
 
 document.addEventListener("DOMContentLoaded", () => {
   loadRooms();
@@ -9,8 +14,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("updateBtn").style.display = "none";
   document.getElementById("saveBtn").style.display = "inline-block";
+  document.getElementById("cancelBtn").style.display = "none";
 
-  // Sorting headers
+  const paginationControlsContainer = document.querySelector('.pagination-controls');
+  const paginationInfoContainer = document.querySelector('.pagination-info');
+
   document.querySelectorAll("#roomTable thead th[data-column]").forEach((th) => {
     th.addEventListener("click", () => {
       const column = th.getAttribute("data-column");
@@ -28,46 +36,140 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("cancelBtn").addEventListener("click", cancelEdit);
 });
 
-// Load rooms with optional search
+async function fetchJSON(url) {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+    const data = await res.json();
+    if (url.includes('get_room.php') && !url.includes('room_id=')) {
+        return data;
+    }
+    return data;
+} catch (err) {
+    console.error(`❌ Fetch error for ${url}:`, err);
+    if (url.includes('get_room.php') && !url.includes('room_id=')) {
+        return { data: [], total_records: 0 };
+    }
+    return [];
+  }
+}
+
 async function loadRooms(query = "") {
   const sortBy = currentSort.column || "room_id";
   const order = currentSort.direction || "asc";
+  const page = currentPage;
+  const limit = rowsPerPage;
 
   try {
-    const res = await fetch(
-      `php/get_room.php?search=${encodeURIComponent(query)}&sort_by=${sortBy}&order=${order}`
-    );
-    const data = await res.json();
+    const url = `php/get_room.php?search=${encodeURIComponent(query)}&sort_by=${sortBy}&order=${order}&page=${page}&limit=${limit}`;
+    const response = await fetchJSON(url);
+
+    const data = response.data || [];
+    totalRecords = response.total_records || 0;
 
     roomList = data;
     const tbody = document.querySelector("#roomTable tbody");
     tbody.innerHTML = "";
+    totalPages = Math.ceil(totalRecords / rowsPerPage);
+
+    if (currentPage > totalPages && totalPages > 0) {
+      currentPage = totalPages;
+      return loadRooms(query);
+    }
+    if (currentPage === 0 && totalRecords > 0) {
+      currentPage = 1;
+    }
 
     if (!Array.isArray(data) || data.length === 0) {
       tbody.innerHTML = `<tr><td colspan="5" class="no-data">No rooms found</td></tr>`;
-      updateSortIndicators();
-      return;
+    } else {
+      data.forEach((room) => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${room.room_id}</td>
+            <td>${room.room_code}</td>
+            <td>${room.capacity}</td>
+            <td>${room.building}</td>
+            <td>
+              <button class="action-btn edit-btn" onclick='editRoom(${JSON.stringify(room)})'>Edit</button>
+              <button class="action-btn delete-btn" onclick='deleteRoom(${room.room_id})'>🗑 Delete</button>
+            </td>
+          </tr>
+        `;
+      });
     }
 
-    data.forEach((room) => {
-      tbody.innerHTML += `
-        <tr>
-          <td>${room.room_id}</td>
-          <td>${room.room_code}</td>
-          <td>${room.capacity}</td>
-          <td>${room.building}</td>
-          <td>
-            <button class="action-btn edit-btn" onclick='editRoom(${JSON.stringify(room)})'>Edit</button>
-            <button class="action-btn delete-btn" onclick='deleteRoom(${room.room_id})'>🗑 Delete</button>
-          </td>
-        </tr>
-      `;
-    });
-
     updateSortIndicators();
+    renderPaginationControls();
   } catch (err) {
-    console.error("Error loading rooms:", err);
+      console.error("Error loading rooms:", err);
   }
+}
+
+function renderPaginationControls() {
+  const paginationControlsContainer = document.querySelector('.pagination-controls');
+  const paginationInfoContainer = document.querySelector('.pagination-info');
+
+  paginationControlsContainer.innerHTML = '';
+  paginationInfoContainer.innerHTML = '';
+  
+  if (totalRecords === 0) {
+    paginationInfoContainer.textContent = "No records found.";
+    return;
+  }
+
+  const start = (currentPage - 1) * rowsPerPage + 1;
+  const end = Math.min(currentPage * rowsPerPage, totalRecords);
+  
+  paginationInfoContainer.textContent = `Showing ${start} to ${end} of ${totalRecords} records (Page ${currentPage} of ${totalPages})`;
+
+  if (totalPages <= 1) return;
+
+  const prevBtn = document.createElement('button');
+  prevBtn.textContent = '« Previous';
+  prevBtn.disabled = currentPage === 1;
+  prevBtn.classList.add('page-button', 'prev-next-btn');
+  prevBtn.onclick = () => {
+    if (currentPage > 1) {
+      currentPage--;
+      loadRooms(document.getElementById("search").value.trim());
+    }
+  };
+  paginationControlsContainer.appendChild(prevBtn);
+
+  const maxButtonsToShow = 5;
+  let startPage = Math.max(1, currentPage - Math.floor(maxButtonsToShow / 2));
+  let endPage = Math.min(totalPages, startPage + maxButtonsToShow - 1);
+
+  if (endPage - startPage + 1 < maxButtonsToShow) {
+      startPage = Math.max(1, endPage - maxButtonsToShow + 1);
+  }
+  
+  for (let i = startPage; i <= endPage; i++) {
+      const numBtn = document.createElement('button');
+      numBtn.textContent = i;
+      numBtn.classList.add('page-button');
+      if (i === currentPage) {
+          numBtn.classList.add('active');
+      }
+      numBtn.onclick = () => {
+          currentPage = i;
+          loadRooms(document.getElementById("search").value.trim());
+      };
+      paginationControlsContainer.appendChild(numBtn);
+  }
+  
+  const nextBtn = document.createElement('button');
+  nextBtn.textContent = 'Next »';
+  nextBtn.disabled = currentPage === totalPages;
+  nextBtn.classList.add('page-button', 'prev-next-btn');
+  nextBtn.onclick = () => {
+    if (currentPage < totalPages) {
+      currentPage++;
+      loadRooms(document.getElementById("search").value.trim());
+    }
+  };
+  paginationControlsContainer.appendChild(nextBtn);
 }
 
 function saveRoom() {
@@ -89,6 +191,7 @@ function saveRoom() {
     .then(msg => {
       alert(msg.message);
       clearForm();
+      currentPage = 1;
       loadRooms();
     })
     .catch(err => console.error("Error saving room:", err));
@@ -114,7 +217,7 @@ function updateRoom() {
     .then(msg => {
       alert(msg.message);
       clearForm();
-      loadRooms();
+      loadRooms(document.getElementById("search").value.trim());
     })
     .catch(err => console.error("Error updating room:", err));
 }
@@ -141,7 +244,10 @@ function deleteRoom(id) {
     .then(res => res.json())
     .then(msg => {
       alert(msg.message);
-      loadRooms();
+      if (roomList.length === 1 && currentPage > 1) {
+        currentPage--;
+      }
+      loadRooms(document.getElementById("search").value.trim());
     })
     .catch(err => console.error("Error deleting room:", err));
 }
@@ -169,6 +275,7 @@ function toggleSort(column) {
     currentSort.direction = "asc";
   }
 
+  currentPage = 1;
   const query = document.getElementById("search").value.trim();
   loadRooms(query);
 }
@@ -191,6 +298,7 @@ function updateSortIndicators() {
 }
 
 function searchRooms(e) {
+  currentPage = 1;
   const query = e.target.value.trim();
   loadRooms(query);
 }
