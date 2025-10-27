@@ -1,5 +1,9 @@
 let departmentList = [];
 let currentSort = { column: "dept_id", direction: "asc" }; // default sorting
+let currentPage = 1;
+const rowsPerPage = 10;
+let totalPages = 1;
+let totalRecords = 0;
 
 document.addEventListener("DOMContentLoaded", () => {
   loadDepartments();
@@ -7,6 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("search").addEventListener("keyup", searchDepartments);
   document.getElementById("updateBtn").style.display = "none";
   document.getElementById("saveBtn").style.display = "inline-block";
+  document.getElementById("cancelBtn").style.display = "none";
 
   // Handle header click for sorting
   document.querySelectorAll("#departmentTable thead th[data-column]").forEach((th) => {
@@ -17,45 +22,141 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
+async function fetchJSON(url) {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+    const data = await res.json();
+    if (url.includes('get_department.php')) {
+      return data;
+    }
+    return data;
+  } catch (err) {
+    console.error(`❌ Fetch error for ${url}:`, err);
+    if (url.includes('get_department.php')) {
+      return { data: [], total_records: 0 };
+    }
+    return [];
+  }
+}
+
 async function loadDepartments(query = "") {
   const sortBy = currentSort.column || "dept_id";
   const order = currentSort.direction || "asc";
+  const page = currentPage;
+  const limit = rowsPerPage;
 
   try {
-    const res = await fetch(
-      `php/get_department.php?search=${encodeURIComponent(query)}&sort_by=${sortBy}&order=${order}`
-    );
-    const data = await res.json();
+    const url = `php/get_department.php?search=${encodeURIComponent(query)}&sort_by=${sortBy}&order=${order}&page=${page}&limit=${limit}`;
+    const response = await fetchJSON(url);
+
+    const data = response.data || [];
+    totalRecords = response.total_records || 0;
 
     departmentList = data;
     const tbody = document.querySelector("#departmentTable tbody");
     tbody.innerHTML = "";
+    totalPages = Math.ceil(totalRecords / rowsPerPage);
+
+    if (currentPage > totalPages && totalPages > 0) {
+      currentPage = totalPages;
+      return loadDepartments(query);
+    }
+    if (currentPage === 0 && totalRecords > 0) {
+      currentPage = 1;
+    }
 
     if (!Array.isArray(data) || data.length === 0) {
       tbody.innerHTML = `<tr><td colspan="4" class="no-data">No departments found</td></tr>`;
-      updateSortIndicators();
-      return;
+    } else {
+      data.forEach((dept) => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${dept.dept_id}</td>
+            <td>${dept.dept_code}</td>
+            <td>${dept.dept_name}</td>
+            <td>
+              <button class="action-btn edit-btn" onclick='editDepartment(${JSON.stringify(dept)})'>Edit</button>
+              <button class="action-btn delete-btn" onclick='deleteDepartment(${dept.dept_id})'>🗑 Delete</button>
+            </td>
+          </tr>
+        `;
+      });
     }
 
-    data.forEach((dept) => {
-      tbody.innerHTML += `
-        <tr>
-          <td>${dept.dept_id}</td>
-          <td>${dept.dept_code}</td>
-          <td>${dept.dept_name}</td>
-          <td>
-            <button class="action-btn edit-btn" onclick='editDepartment(${JSON.stringify(dept)})'>Edit</button>
-            <button class="action-btn delete-btn" onclick='deleteDepartment(${dept.dept_id})'>🗑 Delete</button>
-          </td>
-        </tr>
-      `;
-    });
-
     updateSortIndicators();
+    renderPaginationControls();
   } catch (err) {
     console.error("Error loading departments:", err);
   }
 }
+
+function renderPaginationControls() {
+  const paginationControlsContainer = document.querySelector('.pagination-controls');
+  const paginationInfoContainer = document.querySelector('.pagination-info');
+  const totalPages = Math.ceil(totalRecords / rowsPerPage);
+
+  paginationControlsContainer.innerHTML = '';
+  paginationInfoContainer.innerHTML = '';
+  
+  if (totalRecords === 0) {
+    paginationInfoContainer.textContent = "No records found.";
+    return;
+  }
+
+  const start = (currentPage - 1) * rowsPerPage + 1;
+  const end = Math.min(currentPage * rowsPerPage, totalRecords);
+  
+  paginationInfoContainer.textContent = `Showing ${start} to ${end} of ${totalRecords} records (Page ${currentPage} of ${totalPages})`;
+
+  const prevBtn = document.createElement('button');
+  prevBtn.textContent = '« Previous';
+  prevBtn.disabled = currentPage === 1;
+  prevBtn.classList.add('page-button');
+  prevBtn.onclick = () => {
+    if (currentPage > 1) {
+      currentPage--;
+      loadDepartments(document.getElementById("search").value.trim());
+    }
+  };
+  paginationControlsContainer.appendChild(prevBtn);
+
+  const maxButtonsToShow = 5;
+  let startPage = Math.max(1, currentPage - Math.floor(maxButtonsToShow / 2));
+  let endPage = Math.min(totalPages, startPage + maxButtonsToShow - 1);
+
+  if (endPage - startPage + 1 < maxButtonsToShow) {
+    startPage = Math.max(1, endPage - maxButtonsToShow + 1);
+  }
+  
+  for (let i = startPage; i <= endPage; i++) {
+    const numBtn = document.createElement('button');
+    numBtn.textContent = i;
+    numBtn.classList.add('page-button');
+    if (i === currentPage) {
+      numBtn.classList.add('active');
+      numBtn.disabled = true;
+    }
+    numBtn.onclick = () => {
+      currentPage = i;
+      loadDepartments(document.getElementById("search").value.trim());
+    };
+    paginationControlsContainer.appendChild(numBtn);
+  }
+  
+  const nextBtn = document.createElement('button');
+  nextBtn.textContent = 'Next »';
+  nextBtn.disabled = currentPage === totalPages;
+  nextBtn.classList.add('page-button');
+  nextBtn.onclick = () => {
+    if (currentPage < totalPages) {
+      currentPage++;
+      loadDepartments(document.getElementById("search").value.trim());
+    }
+  };
+  paginationControlsContainer.appendChild(nextBtn);
+}
+
 
 function saveDepartment() {
   const code = document.getElementById("department_code").value.trim();
@@ -75,6 +176,7 @@ function saveDepartment() {
     .then(msg => {
       alert(msg.message);
       clearForm();
+      currentPage = 1;
       loadDepartments();
     })
     .catch(err => console.error("Error saving department:", err));
@@ -99,7 +201,7 @@ function updateDepartment() {
     .then(msg => {
       alert(msg.message);
       clearForm();
-      loadDepartments();
+      loadDepartments(document.getElementById("search").value.trim());
     })
     .catch(err => console.error("Error updating department:", err));
 }
@@ -111,6 +213,7 @@ function editDepartment(dept) {
 
   document.getElementById("updateBtn").style.display = "inline-block";
   document.getElementById("saveBtn").style.display = "none";
+  document.getElementById("cancelBtn").style.display = "inline-block";
 }
 
 function deleteDepartment(id) {
@@ -124,7 +227,10 @@ function deleteDepartment(id) {
     .then(res => res.json())
     .then(msg => {
       alert(msg.message);
-      loadDepartments();
+      if (departmentList.length === 1 && currentPage > 1) {
+          currentPage--;
+      }
+      loadDepartments(document.getElementById("search").value.trim());
     })
     .catch(err => console.error("Error deleting department:", err));
 }
@@ -137,6 +243,7 @@ function toggleSort(column) {
     currentSort.direction = "asc";
   }
 
+  currentPage = 1;
   const searchValue = document.getElementById("search").value.trim();
   loadDepartments(searchValue);
 }
@@ -159,6 +266,7 @@ function updateSortIndicators() {
 }
 
 function searchDepartments(e) {
+  currentPage = 1;
   const query = e.target.value.trim();
   loadDepartments(query);
 }
@@ -170,6 +278,7 @@ function clearForm() {
 
   document.getElementById("updateBtn").style.display = "none";
   document.getElementById("saveBtn").style.display = "inline-block";
+  document.getElementById("cancelBtn").style.display = "none";
 }
 
 function cancelEdit() {
