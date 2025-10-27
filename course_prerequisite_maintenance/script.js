@@ -78,8 +78,8 @@ function loadPrereqList() {
                     <td>${item.prerequisite_code}</td>
                     <td>${item.prerequisite_title}</td>
                     <td class="actions">
-                        <button class="edit-btn" onclick="editPrerequisite(${item.course_id}, ${item.prerequisite_course_id})">Edit</button>
-                        <button class="delete-btn" onclick="deletePrerequisite(${item.course_id}, ${item.prerequisite_course_id})">Delete</button>
+                        <button class="edit-btn" onclick="editPrerequisite(${item.prerequisite_id}, ${item.course_id}, ${item.prerequisite_course_id})">Edit</button>
+                        <button class="delete-btn" onclick="deletePrerequisite(${item.prerequisite_id})">Delete</button>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -122,20 +122,30 @@ function addPrerequisite() {
 }
 
 // Edit prerequisite
-function editPrerequisite(course_id, prereq_id) {
-    document.getElementById("original_course_id").value = course_id;
-    document.getElementById("original_prereq_id").value = prereq_id;
+// UPDATED: Now accepts prerequisite_id_row as the first argument
+function editPrerequisite(prerequisite_id_row, course_id, prereq_course_id) {
+    // original_prereq_id is repurposed to hold the unique row ID for the UPDATE query
+    document.getElementById("original_prereq_id").value = prerequisite_id_row; 
+    
+    // original_course_id is no longer needed for the WHERE clause, but can store the original course_id if required later
+    document.getElementById("original_course_id").value = course_id; 
+
+    // Set the dropdown values
     document.getElementById("course_id").value = course_id;
-    document.getElementById("prereq_course_id").value = prereq_id;
+    document.getElementById("prereq_course_id").value = prereq_course_id;
+    
     document.getElementById("saveBtn").style.display = "none";
     document.getElementById("updateBtn").style.display = "inline-block";
 }
 
 // Update prerequisite
+// No change here, as it posts the original_prereq_id (which is now the unique row ID)
 function updatePrerequisite() {
     const formData = new FormData();
-    formData.append("original_course_id", document.getElementById("original_course_id").value);
+    // original_prereq_id now holds the unique prerequisite_id
+    // original_course_id is technically redundant for the WHERE clause now, but we keep it in the form data
     formData.append("original_prereq_id", document.getElementById("original_prereq_id").value);
+    
     formData.append("new_course_id", document.getElementById("course_id").value);
     formData.append("new_prereq_id", document.getElementById("prereq_course_id").value);
 
@@ -153,17 +163,17 @@ function updatePrerequisite() {
 }
 
 // Delete prerequisite
-function deletePrerequisite(course_id, prereq_id) {
+function deletePrerequisite(prerequisite_id) {
     if (!confirm("Are you sure you want to delete this prerequisite?")) return;
 
     const formData = new FormData();
-    formData.append("course_id", course_id);
-    formData.append("prereq_course_id", prereq_id);
+    formData.append("prerequisite_id_to_delete", prerequisite_id); 
 
     fetch("php/delete_prerequisite.php", { method: "POST", body: formData })
         .then(res => res.json())
         .then(data => {
             if (data.status === "success") {
+                alert("Prerequisite successfully deleted!"); 
                 loadPrereqList();
             } else {
                 alert("Error deleting prerequisite: " + data.message);

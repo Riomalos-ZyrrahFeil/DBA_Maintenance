@@ -1,15 +1,21 @@
 <?php
 include '../../db.php';
+header('Content-Type: application/json');
 
-$course_id = $_POST['course_id'];
-$prereq_id = $_POST['prereq_course_id'];
+$prerequisite_id = $_POST['prerequisite_id_to_delete'];
 
-$stmt = $conn->prepare("DELETE FROM tbl_course_prerequisite WHERE course_id = ? AND prereq_course_id = ?");
-$stmt->bind_param("ii", $course_id, $prereq_id);
+$stmt = $conn->prepare("UPDATE tbl_course_prerequisite 
+    SET is_deleted = 1 
+    WHERE prerequisite_id = ?");
+    
+$stmt->bind_param("i", $prerequisite_id);
 
 if ($stmt->execute()) {
     echo json_encode(["status" => "success"]);
 } else {
-    echo json_encode(["status" => "error", "message" => $stmt->error]);
+    echo json_encode([
+        "status" => "error", 
+        "message" => "Could not delete the prerequisite."
+    ]);
 }
 ?>
