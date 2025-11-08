@@ -1,6 +1,7 @@
 // ===== Global Variables =====
 let sections = [];
 let currentSort = { column: "section_id", direction: "asc" }; // default sort
+const MODAL_SECTION_CODES = ["DIT-1-1-TG", "DIT-2-1-TG", "DIT-3-1-TG"];
 const modal = document.getElementById("sectionModal");
 const modalTitle = document.querySelector(".modal-header h2");
 
@@ -22,16 +23,23 @@ function closeModal() {
 
 // ===== Populate Dropdown Helper =====
 function populateDropdown(id, data, field1, field2 = "") {
-  const select = document.getElementById(id);
-  select.innerHTML = '<option value="">Select</option>';
-  data.forEach(item => {
-    const text = field2 ? `${item[field1]} - ${item[field2]}` : item[field1];
-    const valueKey = Object.keys(item).find(k => k.endsWith("_id"));
-    select.insertAdjacentHTML(
-      "beforeend",
-      `<option value="${item[valueKey]}">${text}</option>`
-    );
-  });
+  const select = document.getElementById(id);
+  select.innerHTML = '<option value="">Select</option>';
+  data.forEach(item => {
+    const text = field2 ? `${item[field1]} - ${item[field2]}` : item[field1];
+    let value;
+    if (id === "section_code") {
+        value = item[field1]; // Use the code itself as the value
+    } else {
+        const valueKey = Object.keys(item).find(k => k.endsWith("_id"));
+        value = item[valueKey];
+    }
+
+    select.insertAdjacentHTML(
+      "beforeend",
+      `<option value="${value}">${text}</option>`
+    );
+  });
 }
 
 // ===== Load Dropdowns =====
@@ -40,6 +48,9 @@ function loadDropdowns() {
   fetch("php/fetch_term.php").then(r => r.json()).then(d => populateDropdown("term_id", d, "term_code"));
   fetch("php/fetch_instructor.php").then(r => r.json()).then(d => populateDropdown("instructor_id", d, "instructor_name"));
   fetch("php/fetch_room.php").then(r => r.json()).then(d => populateDropdown("room_id", d, "room_code"));
+
+  const sectionCodeData = MODAL_SECTION_CODES.map(code => ({ section_code_id: code, section_code_name: code }));
+  populateDropdown("section_code", sectionCodeData, "section_code_name", "");
 }
 
 // ===== Load Sections =====

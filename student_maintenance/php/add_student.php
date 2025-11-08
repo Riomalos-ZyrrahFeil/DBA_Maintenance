@@ -1,10 +1,8 @@
 <?php
 include '../../db.php';
 
-// Decode JSON input
 $data = json_decode(file_get_contents("php://input"), true);
 
-// ✅ Basic validation
 if (
   empty($data['student_no']) ||
   empty($data['student_name']) ||
@@ -18,7 +16,6 @@ if (
   exit;
 }
 
-// ✅ Insert query with new column
 $sql = "INSERT INTO tbl_student 
         (student_no, student_name, email, gender, birthdate, year_level, program_id)
         VALUES (?, ?, ?, ?, ?, ?, ?)";

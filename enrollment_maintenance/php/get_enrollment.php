@@ -88,8 +88,8 @@ if ($search !== '') {
 $dataSql = "
     SELECT 
         e.enrollment_id, 
-        s.student_name,  /* <-- New field: student name */
-        sec.section_code, /* <-- New field: section code */
+        s.student_name,
+        sec.section_code,
         e.date_enrolled, 
         e.status, 
         e.letter_grade

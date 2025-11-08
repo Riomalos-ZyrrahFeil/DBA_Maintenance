@@ -57,11 +57,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // =================== Load Sections (Unchanged) ===================
     async function loadSections() {
-        const data = await fetchJSON('php/fetch_sections.php');
-        sectionSelect.innerHTML = '<option value="">Select Section</option>';
-        data.forEach(sec => {
-            sectionSelect.innerHTML += `<option value="${sec.section_id}">${sec.section_code}</option>`;
-        });
+        const data = await fetchJSON('php/fetch_sections.php');
+        sectionSelect.innerHTML = '<option value="">Select Section</option>';
+        data.forEach(sec => {
+            // 🆕 Use the new display_text from the PHP script
+            const displayText = sec.display_text || sec.section_code; 
+            sectionSelect.innerHTML += `<option value="${sec.section_id}">${displayText}</option>`;
+        });
     }
 
     // =================== Load Enrollments (Updated for Display) ===================
