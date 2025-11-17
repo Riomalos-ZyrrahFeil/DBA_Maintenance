@@ -16,8 +16,9 @@ body {
 
 .container {
     max-width: 1400px;
-    margin: 1rem 3rem;
+    margin: 1rem auto;
     padding: 1rem;
+    width: 95%;
 }
 
 /* =================== Heading =================== */
@@ -25,7 +26,6 @@ header {
     text-align: center;
     padding: 2rem 1rem;
     background-color: #e4e6e8;
-    color: white;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -37,13 +37,13 @@ h1 {
     letter-spacing: 1px;
 }
 
-/* =================== Form Container =================== */
+/* =================== Form Container (Modal Content Styling) =================== */
 .form-container {
     background-color: #fff;
     padding: 25px 30px;
     border-radius: 12px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-    margin-bottom: 2rem;
+    margin-bottom: 0; /* Adjusted for modal structure */
 }
 
 .form-container h2 {
@@ -75,6 +75,46 @@ h1 {
 .form-row select:focus {
     border-color: #800000;
     outline: none;
+}
+
+/* =================== Course Display in New Modal =================== */
+/* Note: The ID is now #courseDetailsContent */
+#courseDetailsContent {
+    margin: 15px 0;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-left: 5px solid #800000; /* Maroon accent */
+    border-radius: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    background-color: #fcfcfc;
+    font-size: 0.9rem;
+}
+
+#courseDetailsContent h4 {
+    color: #800000;
+    margin-bottom: 8px;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+#courseDetailsContent ul {
+    list-style: none;
+    padding-left: 0;
+    margin-left: 5px;
+}
+
+#courseDetailsContent ul li {
+    padding: 4px 0;
+    border-bottom: 1px dotted #eee;
+}
+
+#courseDetailsContent ul li:last-child {
+    border-bottom: none;
+}
+
+#courseDetailsContent p.error {
+    color: #dc3545;
 }
 
 /* =================== Form Buttons =================== */
@@ -187,6 +227,14 @@ tbody tr:hover {
     transition: background 0.3s;
 }
 
+.action-btn.show-courses-btn {
+    background-color: #007bff; /* Blue for info button */
+}
+
+.action-btn.show-courses-btn:hover {
+    background-color: #0056b3;
+}
+
 .edit-btn {
     background-color: #4CAF50;
 }
@@ -280,7 +328,7 @@ thead th[data-column]:hover {
     color: #b30000;
 }
 
-/* =================== Pagination Controls (NEW for alignment) =================== */
+/* =================== Pagination Controls =================== */
 .pagination-controls {
     display: flex;
     justify-content: center;

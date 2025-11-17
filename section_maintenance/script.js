@@ -1,7 +1,8 @@
 // ===== Global Variables =====
 let sections = [];
 let currentSort = { column: "section_id", direction: "asc" }; // default sort
-const MODAL_SECTION_CODES = ["DIT-1-1-TG", "DIT-2-1-TG", "DIT-3-1-TG"];
+const MODAL_SECTION_CODES = ["DIT-1-1-TG", "DIT-2-1-TG", "DIT-3-1-TG",
+                             "BSIT-1-1-TG", "BSIT-2-1-TG", "BSIT-3-1-TG"];
 const modal = document.getElementById("sectionModal");
 const modalTitle = document.querySelector(".modal-header h2");
 

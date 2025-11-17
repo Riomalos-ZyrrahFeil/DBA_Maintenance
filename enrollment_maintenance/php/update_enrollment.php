@@ -13,9 +13,8 @@ $status        = $data['status'] ?? '';
 $letter_grade  = $data['letter_grade'] ?? '';
 
 if ($enrollment_id && $student_id && $section_id && $date_enrolled && $status) {
-
     $stmt = $conn->prepare("UPDATE tbl_enrollment SET student_id=?, enrollment_type=?, section_id=?, date_enrolled=?, status=?, letter_grade=? WHERE enrollment_id=?");
-    $stmt->bind_param("isssssi", $student_id, $enrollment_type, $section_id, $date_enrolled, $status, $letter_grade, $enrollment_id); // 🆕 Updated binding
+    $stmt->bind_param("isssssi", $student_id, $enrollment_type, $section_id, $date_enrolled, $status, $letter_grade, $enrollment_id);
 
     if ($stmt->execute()) {
         echo json_encode(["status" => "success", "message" => "Enrollment updated successfully."]);
