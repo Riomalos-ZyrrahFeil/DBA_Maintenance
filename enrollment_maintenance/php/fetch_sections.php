@@ -1,8 +1,19 @@
 <?php
+// CRITICAL: Ensure robust error handling is present
+ob_start();
+ini_set('display_errors', 0); 
+error_reporting(E_ALL);
+
 include '../../db.php';
 header('Content-Type: application/json');
 
-// Fetch section_id, section_code, and join with related tables for better display text
+if (!$conn || $conn->connect_error) {
+    ob_end_clean();
+    echo json_encode(["status" => "error", "message" => "Connection failed."]);
+    exit;
+}
+
+// 🆕 FINAL QUERY: Includes joins to tbl_course and tbl_room for descriptive display
 $sql = "
     SELECT 
         s.section_id, 
@@ -17,17 +28,27 @@ $sql = "
 ";
 
 $result = $conn->query($sql);
-
 $sections = [];
+
+if (!$result) {
+    ob_end_clean();
+    // This will now catch any remaining JOIN/CONCAT/TIME_FORMAT errors cleanly
+    echo json_encode(["status" => "error", "message" => "FINAL SQL Error: " . $conn->error]); 
+    $conn->close();
+    exit;
+}
+// add ko to sa enrollment flow
 while ($row = $result->fetch_assoc()) {
-    // Combine the code, instructor, and time to create a unique display label for each unique section_id
+    // 🆕 Create the descriptive display text
     $row['display_text'] = $row['section_code'] . 
-                           ' (' . $row['day_pattern'] . 
-                           ' ' . $row['start_time'] . 
-                           ' - ' . (empty($row['instructor_name']) ? 'No Instructor' : $row['instructor_name']) . 
-                           ')';
+                           ' (' . ($row['course_code'] ?? 'N/A') . // Null-safe display
+                           ' | ' . ($row['room_name'] ?? 'N/A') . // Null-safe display
+                           ' | ' . $row['day_pattern'] . 
+                           ' ' . $row['start_time'] . ')';
     $sections[] = $row;
 }
 
+ob_end_clean();
 echo json_encode($sections);
+$conn->close();
 ?>
