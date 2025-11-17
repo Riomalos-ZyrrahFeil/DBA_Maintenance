@@ -1,21 +1,23 @@
 <?php
 include '../../db.php';
+header('Content-Type: application/json');
 
-$enrollment_id = $_GET['id'] ?? '';
+$id = isset($_GET['id']) ? intval($_GET['id']) : null;
 
-if ($enrollment_id) {
-    // Soft delete: set is_deleted = 1
+if ($id) {
+    // 🆕 Soft Delete implementation: Sets is_deleted flag to 1
     $stmt = $conn->prepare("UPDATE tbl_enrollment SET is_deleted = 1 WHERE enrollment_id = ?");
-    $stmt->bind_param("i", $enrollment_id);
+    $stmt->bind_param("i", $id);
 
     if ($stmt->execute()) {
-        echo json_encode(["status" => "success", "message" => "Enrollment deleted successfully (soft delete)."]);
+        echo json_encode(["status" => "success", "message" => "Record soft-deleted successfully."]);
     } else {
-        echo json_encode(["status" => "error", "message" => "Failed to delete enrollment."]);
+        echo json_encode(["status" => "error", "message" => "Failed to soft-delete record: " . $stmt->error]);
     }
-
     $stmt->close();
 } else {
-    echo json_encode(["status" => "error", "message" => "Missing enrollment ID."]);
+    echo json_encode(["status" => "error", "message" => "Missing Enrollment ID."]);
 }
+
+$conn->close();
 ?>

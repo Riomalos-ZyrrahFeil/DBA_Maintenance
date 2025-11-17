@@ -26,7 +26,10 @@
                 <thead>
                 <tr>
                     <th data-column="enrollment_id">Enrollment ID</th>
-                    <th data-column="student_name">Student Name</th> <th data-column="section_code">Section Code</th> <th data-column="date_enrolled">Date Enrolled</th>
+                    <th data-column="student_name">Student Name</th>
+                    <th data-column="section_code">Section Code</th>
+                    <th data-column="enrollment_type">Type</th> 
+                    <th data-column="date_enrolled">Date Enrolled</th>
                     <th data-column="status">Status</th>
                     <th data-column="letter_grade">Letter Grade</th>
                     <th>Actions</th>
@@ -52,6 +55,14 @@
                     <label for="student_id">Student</label>
                     <select id="student_id">
                         <option value="">Select Student</option>
+                    </select>
+                </div>
+                
+                <div class="form-row">
+                    <label for="enrollment_type">Enrollment Type</label>
+                    <select id="enrollment_type">
+                        <option value="Regular">Regular</option>
+                        <option value="Irregular">Irregular</option>
                     </select>
                 </div>
 
@@ -84,6 +95,21 @@
                     <button id="saveBtn">Save</button>
                     <button id="updateBtn" style="display:none;">Update</button>
                     <button id="cancelBtn" style="display:none;">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="courseDetailsModal">
+        <div class="modal-content">
+            <span class="close-modal" id="closeCourseDetailsModalBtn">&times;</span>
+            <div class="form-container">
+                <h2 id="courseDetailsTitle">Currently Enrolled Courses</h2>
+                <div id="courseDetailsContent" class="enrolled-courses-display">
+                    <p>Loading course data...</p>
+                </div>
+                <div class="form-buttons">
+                    <button id="closeCourseDetailsBtn">Close</button>
                 </div>
             </div>
         </div>
