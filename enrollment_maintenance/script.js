@@ -4,8 +4,8 @@ let currentPage = 1;
 const rowsPerPage = 10;
 let totalPages = 1;
 let allSections = []; // Global storage for all fetched sections
-let allStudents = {};
-let currentAcademicYear = 0;
+let allStudents = {}; // Global storage for student details (key: student_id)
+let currentAcademicYear = 0; // Global storage for the current year
 
 document.addEventListener("DOMContentLoaded", () => {
     const enrollmentTableBody = document.querySelector('#enrollmentTable tbody');
@@ -24,6 +24,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const enrollmentModal = document.getElementById('enrollmentModal');
     const openModalBtn = document.getElementById('openModalBtn');
     const closeModalBtn = document.getElementById('closeModalBtn');
+    
+    // 🆕 New Course Details Modal elements
     const courseDetailsModal = document.getElementById('courseDetailsModal');
     const closeCourseDetailsModalBtn = document.getElementById('closeCourseDetailsModalBtn');
     const closeCourseDetailsBtn = document.getElementById('closeCourseDetailsBtn');
@@ -31,7 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const courseDetailsContent = document.getElementById('courseDetailsContent');
 
 
-    // (Enrollment Form)
+    // =================== Modal Control (Enrollment Form) ===================
     openModalBtn.addEventListener('click', () => {
         clearForm();
         enrollmentModal.style.display = 'flex';
@@ -45,7 +47,7 @@ document.addEventListener("DOMContentLoaded", () => {
         clearForm();
     }
     
-    // (Course Details Popup)
+    // =================== Modal Control (Course Details Popup) ===================
     closeCourseDetailsModalBtn.addEventListener('click', closeCourseDetailsModal);
     closeCourseDetailsBtn.addEventListener('click', closeCourseDetailsModal);
     window.addEventListener('click', e => { if (e.target === courseDetailsModal) closeCourseDetailsModal(); });
@@ -56,16 +58,22 @@ document.addEventListener("DOMContentLoaded", () => {
         courseDetailsTitle.textContent = 'Currently Enrolled Courses';
     }
 
+
+    // =================== Helper: Fetch JSON (IMPROVED Error Debugging) ===================
     async function fetchJSON(url, options = {}) {
         try {
             const res = await fetch(url, options);
             if (!res.ok) {
+                // Read the text of the response if status is not ok, to help debug
                 const text = await res.text();
+                // Throw an error with a larger response text snippet (500 chars)
                 throw new Error(`HTTP error! Status: ${res.status}. Response start: ${text.substring(0, 500)}...`);
             }
             return await res.json();
         } catch (err) {
             console.error(`❌ Fetch error for ${url}:`, err);
+            
+            // Explicitly flag SyntaxError for easier debugging of non-JSON PHP output
             if (err instanceof SyntaxError) {
                  console.error("⚠️ Failed to parse JSON. Server response was likely HTML/PHP error messages.");
             }
@@ -73,6 +81,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (options.isList) {
                 return { data: [], total_records: 0, status: 'error', message: err.message }; 
             }
+            // Return a standardized error object on failure for the caller to check `response.status === 'error'`
             return { status: 'error', message: err.message }; 
         }
     }
@@ -84,29 +93,35 @@ document.addEventListener("DOMContentLoaded", () => {
             currentAcademicYear = response.year;
             console.log("Current Academic Year fetched:", currentAcademicYear);
         } else {
+            // Use current year as fallback if fetch fails or returns error status
             currentAcademicYear = new Date().getFullYear();
             console.error(response.message || "Failed to fetch current year, using fallback:", currentAcademicYear);
         }
     }
 
+    // =================== Load Students (Modified to store details) ===================
     async function loadStudents() {
         const data = await fetchJSON('php/fetch_students.php');
         studentSelect.innerHTML = '<option value="">Select Student</option>';
-
+        
+        // Handle potential error response which might be an object { status: 'error', ... }
         const studentsArray = Array.isArray(data) ? data : (data.data || []);
 
         studentsArray.forEach(s => {
             studentSelect.innerHTML += `<option value="${s.student_id}">${s.student_name} (${s.student_id})</option>`;
             allStudents[s.student_id] = { 
-                year_level: s.year_level,
-                program_code: s.program_code,
-                student_name: s.student_name
+                year_level: s.year_level, // e.g., '3-1'
+                program_code: s.program_code, // e.g., 'DIT-TG'
+                student_name: s.student_name // Store name for lookup
             };
         });
     }
 
+    // =================== Load Sections (Modified to store all data) ===================
     async function loadSections() {
         const data = await fetchJSON('php/fetch_sections.php');
+        
+        // Handle potential error response which might be an object { status: 'error', ... }
         if (data && data.status === "error") {
             console.error("Error fetching sections:", data.message);
             allSections = [];
@@ -115,12 +130,12 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         updateSectionDropdown();
     }
-
+    
+    // =================== Conditional Dropdown Filter (Dynamic Logic) ===================
     function updateSectionDropdown() {
         const enrollmentType = enrollmentTypeSelect.value;
         const studentId = studentSelect.value;
         const sectionSelect = document.getElementById('section_id');
-        const academicYear = currentAcademicYear || 2025; 
 
         sectionSelect.innerHTML = '<option value="">Select Section</option>';
         sectionSelect.disabled = true;
@@ -145,18 +160,34 @@ document.addEventListener("DOMContentLoaded", () => {
             
             const targetSectionCode = `${programBase}-${yearNum}-${semesterNum}-TG`; 
 
+            // 🚨 FIX: Removed the academic year filter here to allow enrollment into blocks 
+            // defined in any year that match the required section code (level/program).
             filteredSections = allSections.filter(sec => 
-                sec.section_code === targetSectionCode && 
-                parseInt(sec.year) === academicYear 
+                sec.section_code === targetSectionCode
             );
             
             if (filteredSections.length > 0) {
-                const singleSection = filteredSections[0];
-                const displayLabel = `[ENROLLED BLOCK] ${singleSection.section_code} - ${singleSection.year}`;
-                sectionSelect.innerHTML = `<option value="${singleSection.section_id}">${displayLabel}</option>`;
+                // Find a unique list of section codes and years to display.
+                // Since blocks might be duplicated across years, we ensure only one unique option is selectable per section code.
+                const uniqueBlocks = {};
+                filteredSections.forEach(sec => {
+                    const key = `${sec.section_code}-${sec.year}`;
+                    if (!uniqueBlocks[key]) {
+                        uniqueBlocks[key] = sec;
+                    }
+                });
+
+                // Display only the unique block options
+                sectionSelect.innerHTML = `<option value="">Select Block Section</option>`;
+                Object.values(uniqueBlocks).forEach(sec => {
+                    const displayLabel = `[ENROLLED BLOCK] ${sec.section_code} - ${sec.year}`;
+                    // Use the section_id of one of the courses in the block to identify the block
+                    sectionSelect.innerHTML += `<option value="${sec.section_id}">${displayLabel}</option>`;
+                });
+
                 sectionSelect.disabled = false;
             } else {
-                dropdownPlaceholder = `No Block Found (${targetSectionCode} - ${academicYear})`;
+                dropdownPlaceholder = `No Block Found (${targetSectionCode})`;
                 sectionSelect.innerHTML = `<option value="" disabled>${dropdownPlaceholder}</option>`;
             }
 
@@ -172,7 +203,8 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         }
         
-        if (!sectionSelect.disabled && sectionSelect.options.length === 1 && sectionSelect.value === "") {
+        // Final check to disable if only the placeholder is left
+        if (sectionSelect.options.length === 1 && sectionSelect.value === "") {
             sectionSelect.disabled = true;
         }
         
@@ -180,7 +212,8 @@ document.addEventListener("DOMContentLoaded", () => {
             sectionSelect.disabled = false;
         }
     }
-
+    
+    // 🆕 New: Populate and Show Course Details Modal
     async function populateCourseDetailsModal(studentId, studentName) {
         courseDetailsTitle.textContent = `Enrolled Courses for ${studentName}`;
         courseDetailsContent.innerHTML = '<p>Loading course data...</p>';
@@ -196,7 +229,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const enrollments = Array.isArray(response) ? response : (response.data || []);
 
         if (enrollments.length === 0) {
-            courseDetailsContent.innerHTML = `<p> Student has no current active enrollments (Status: Enrolled/Pending).</p>`;
+            courseDetailsContent.innerHTML = `<p>✅ Student has no current active enrollments (Status: Enrolled/Pending).</p>`;
         } else {
             let html = '<ul style="list-style: none; padding-left: 0;">';
             
@@ -218,16 +251,21 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         courseDetailsModal.style.display = 'flex';
     }
-
+    
+    // Make it globally accessible for the new button in the table
     window.openCourseDetailsModal = (studentId) => {
+        // Look up student name from the locally stored map
         const student = allStudents[studentId];
         const studentName = student ? student.student_name : `Student ID ${studentId}`;
         populateCourseDetailsModal(studentId, studentName);
     };
 
-    enrollmentTypeSelect.addEventListener('change', updateSectionDropdown);
-    studentSelect.addEventListener('change', updateSectionDropdown);
 
+    // Event Listeners for the Dropdown Filter (Enrollment Modal)
+    enrollmentTypeSelect.addEventListener('change', updateSectionDropdown);
+    studentSelect.addEventListener('change', updateSectionDropdown); // Only filter sections on student change
+
+    // =================== Load Enrollments (Updated for Display & New Button) ===================
     async function loadEnrollments(query = "") {
         const { column, direction } = currentSort;
         const page = currentPage;
@@ -246,8 +284,10 @@ document.addEventListener("DOMContentLoaded", () => {
             enrollmentTableBody.innerHTML = `<tr><td colspan="8" class="no-data">No enrollments found</td></tr>`;
         } else {
             data.forEach(e => {
+                // IMPORTANT: Ensure student_id is an integer. 
                 const studentId = parseInt(e.student_id); 
-
+                
+                // Safety check: only render the button if the student ID is a positive number
                 const showCoursesBtn = (studentId && studentId > 0)
                     ? `<button class="action-btn show-courses-btn" onclick="openCourseDetailsModal(${studentId})">Show Courses</button>`
                     : `<button class="action-btn" disabled title="Student ID not found">No Courses</button>`;
@@ -275,7 +315,7 @@ document.addEventListener("DOMContentLoaded", () => {
         renderPaginationControls();
     }
 
-    //  Pagination
+    // =================== Pagination Controls (Unchanged) ===================
     function renderPaginationControls() {
         paginationContainer.innerHTML = '';
         if (totalPages <= 1) return;
@@ -308,7 +348,7 @@ document.addEventListener("DOMContentLoaded", () => {
         paginationContainer.appendChild(nextBtn);
     }
 
-    // Sorting
+    // =================== Sorting (Unchanged) ===================
     document.querySelectorAll('#enrollmentTable thead th[data-column]').forEach(th => {
         th.addEventListener('click', () => toggleSort(th.getAttribute('data-column')));
     });
@@ -340,13 +380,13 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Search
+    // =================== Search (Unchanged) ===================
     searchInput.addEventListener('input', e => {
         currentPage = 1;
         loadEnrollments(e.target.value.trim());
     });
 
-    // Save 
+    // =================== Save (Fixed JSON reading) ===================
     saveBtn.addEventListener('click', async () => {
         const payload = getFormData();
         if (!payload) return;
@@ -359,17 +399,17 @@ document.addEventListener("DOMContentLoaded", () => {
         const resp = await res.json(); 
 
         if (resp.status === "success") {
-            console.log('Enrollment added successfully! Message: ' + resp.message);
+            console.log('✅ Enrollment added successfully! Message: ' + resp.message);
             currentPage = 1;
             loadEnrollments();
             closeEnrollmentModal();
         } else {
-            console.error('Error adding enrollment: ' + resp.message); 
-            alert('Error adding enrollment: ' + resp.message); 
+            console.error('⚠️ Error adding enrollment: ' + resp.message); 
+            alert('⚠️ Error adding enrollment: ' + resp.message); 
         }
     });
 
-    // Update
+    // =================== Update (Fixed JSON reading) ===================
     updateBtn.addEventListener('click', async () => {
         const payload = getFormData();
         if (!payload) return;
@@ -384,17 +424,18 @@ document.addEventListener("DOMContentLoaded", () => {
         const resp = await res.json(); 
         
         if (resp.status === "success") {
-            console.log('Enrollment updated successfully!');
+            console.log('✅ Enrollment updated successfully!');
             loadEnrollments(searchInput.value.trim());
             closeEnrollmentModal();
         } else {
-            console.error('Error updating enrollment: ' + resp.message);
-            alert('Error updating enrollment: ' + resp.message); 
+            console.error('⚠️ Error updating enrollment: ' + resp.message);
+            alert('⚠️ Error updating enrollment: ' + resp.message); 
         }
     });
 
     cancelBtn.addEventListener('click', closeEnrollmentModal);
 
+    // =================== Form Helpers (Updated for enrollment_type) ===================
     function clearForm() {
         document.getElementById('enrollment_id').value = '';
         studentSelect.value = '';
@@ -406,7 +447,7 @@ document.addEventListener("DOMContentLoaded", () => {
         saveBtn.style.display = 'inline-block';
         updateBtn.style.display = 'none';
         cancelBtn.style.display = 'none';
-        updateSectionDropdown();
+        updateSectionDropdown(); // Re-filter dropdown on clear
     }
 
     function getFormData() {
@@ -425,6 +466,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return { student_id: parseInt(student_id), enrollment_type, section_id: parseInt(section_id), date_enrolled, status, letter_grade };
     }
 
+    // =================== Edit (Modified to remove loadStudentEnrollments) ===================
     window.editEnrollment = async (id) => {
         const data = await fetchJSON(`php/get_enrollment.php?id=${id}`);
         if (!data || data.status === "error") {
@@ -435,9 +477,12 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById('enrollment_id').value = data.enrollment_id;
         studentSelect.value = data.student_id;
         enrollmentTypeSelect.value = data.enrollment_type;
+        
+        // Removed loadStudentEnrollments(data.student_id); as it's now a separate action
 
         updateSectionDropdown(); // Filter options based on fetched student/type
 
+        // Delay setting sectionSelect value to ensure options are loaded
         setTimeout(() => {
              sectionSelect.value = data.section_id;
         }, 50);
@@ -452,17 +497,17 @@ document.addEventListener("DOMContentLoaded", () => {
         enrollmentModal.style.display = 'flex';
     };
 
-    // Delete
+    // =================== Delete (Unchanged) ===================
     window.deleteEnrollment = async (id) => {
-        if (!confirm("Are you sure you want to delete this enrollment?")) return;
+        if (!confirm("❌ Are you sure you want to delete this enrollment?")) return;
         const response = await fetch(`php/delete_enrollment.php?id=${id}`);
         const resp = await response.json(); 
         
         if (resp.status === "success") {
-            console.log('Enrollment deleted successfully!');
+            console.log('🗑 Enrollment deleted successfully!');
         } else {
-            console.error('Error deleting enrollment: ' + resp.message);
-            alert('Error deleting enrollment: ' + resp.message);
+            console.error('⚠️ Error deleting enrollment: ' + resp.message);
+            alert('⚠️ Error deleting enrollment: ' + resp.message);
         }
         
         if (enrollmentList.length === 1 && currentPage > 1) {
@@ -472,7 +517,7 @@ document.addEventListener("DOMContentLoaded", () => {
         loadEnrollments(searchInput.value.trim());
     };
 
-    // Export
+    // =================== Export (Unchanged) ===================
     document.getElementById('exportExcelBtn').addEventListener('click', () => {
         window.location.href = 'php/export_excel.php';
     });
@@ -483,6 +528,6 @@ document.addEventListener("DOMContentLoaded", () => {
     // =================== Initial Load ===================
     fetchCurrentAcademicYear();
     loadStudents();
-    loadSections();
+    loadSections(); // This stores data and calls updateSectionDropdown
     loadEnrollments();
 });

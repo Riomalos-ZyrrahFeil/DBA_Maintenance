@@ -66,55 +66,6 @@ try {
     $inserted_count = 0;
     foreach ($sections_to_enroll as $section) {
         $section_id = $section['section_id'];
-        $target_course_id = $section['course_id'];
-        
-        $target_course_code = 'Unknown Course';
-        $stmt_target_course = $conn->prepare("SELECT course_code FROM tbl_course WHERE course_id = ?");
-        $stmt_target_course->bind_param("i", $target_course_id);
-        $stmt_target_course->execute();
-        $target_course_result = $stmt_target_course->get_result()->fetch_assoc();
-        if ($target_course_result) {
-            $target_course_code = $target_course_result['course_code'];
-        }
-        $stmt_target_course->close();
-        
-        // --- PREREQUISITE CHECK ---
-        $stmt_prereqs = $conn->prepare("
-            SELECT c.course_code, cp.prereq_course_id
-            FROM tbl_course_prerequisite cp
-            INNER JOIN tbl_course c ON cp.prereq_course_id = c.course_id
-            WHERE cp.course_id = ? AND cp.is_deleted = 0
-        ");
-        $stmt_prereqs->bind_param("i", $target_course_id);
-        $stmt_prereqs->execute();
-        $prerequisites = $stmt_prereqs->get_result()->fetch_all(MYSQLI_ASSOC);
-        $stmt_prereqs->close();
-
-        foreach ($prerequisites as $prereq) {
-            $prereq_course_id = $prereq['prereq_course_id'];
-            $prereq_course_code = $prereq['course_code'];
-
-            $stmt_passed = $conn->prepare("
-                SELECT enrollment_id 
-                FROM tbl_enrollment e
-                INNER JOIN tbl_section s ON e.section_id = s.section_id
-                WHERE e.student_id = ? 
-                  AND s.course_id = ? 
-                  AND e.status = 'Completed' 
-                  AND e.letter_grade IS NOT NULL 
-                  AND e.letter_grade != ''
-                  AND e.is_deleted = 0
-            ");
-            $stmt_passed->bind_param("ii", $student_id, $prereq_course_id);
-            $stmt_passed->execute();
-            $is_passed = $stmt_passed->get_result()->num_rows > 0;
-            $stmt_passed->close();
-
-            if (!$is_passed) {
-                throw new Exception("Prerequisite failed for **" . $target_course_code . "**. Required: **" . $prereq_course_code . "**");
-            }
-        }
-
         $insert_stmt->bind_param("isssss", $student_id, $enrollment_type, $section_id, $date_enrolled, $status, $letter_grade);
         
         if (!$insert_stmt->execute()) {
@@ -124,7 +75,6 @@ try {
     }
     
     $insert_stmt->close();
-
     $conn->commit();
     $message = ($enrollment_type === 'Regular') 
                ? "Regular enrollment successful. Inserted $inserted_count courses."

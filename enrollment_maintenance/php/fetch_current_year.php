@@ -37,3 +37,4 @@ echo json_encode(["status" => $status, "message" => $message, "year" => (int)$cu
 
 $conn->close();
 ?>
+ini_set('display_errors', 'Off');
