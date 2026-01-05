@@ -7,15 +7,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $password = $_POST['password'];
     $selected_role = $_POST['role']; 
 
-    // 1. Check if the Email exists at all in the system
     $stmt = $conn->prepare("SELECT user_id, password, role, reference_id FROM tbl_user WHERE email = ?");
     $stmt->bind_param("s", $email);
     $stmt->execute();
     $result = $stmt->get_result();
 
     if ($user = $result->fetch_assoc()) {
-        // 2. Email found, now check if the Role matches what they clicked
-        if ($user['role'] !== $selected_role) {
+        $is_super_admin_as_faculty = ($user['role'] === 'super_admin' && $selected_role === 'faculty');
+        
+        if ($user['role'] !== $selected_role && !$is_super_admin_as_faculty) {
             echo "<script>
                     alert('This email is registered as a " . $user['role'] . ", not " . $selected_role . ".');
                     window.location.href = '../../index.php';
@@ -27,12 +27,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_SESSION['user_id'] = $user['user_id'];
             $_SESSION['role'] = $user['role'];
             $_SESSION['ref_id'] = $user['reference_id'];
-
-            if ($user['role'] === 'faculty') {
-                header("Location: ../../dashboard.php"); 
-            } else {
-                header("Location: ../../enrollment_maintenance/index.html");
+            
+            if ($user['role'] === 'student') {
+                $_SESSION['student_id'] = $user['reference_id'];
             }
+
+            header("Location: ../../dashboard.php");
             exit();
         } else {
             echo "<script>

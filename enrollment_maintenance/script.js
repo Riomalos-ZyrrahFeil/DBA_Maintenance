@@ -1,6 +1,5 @@
 /**
  * 1. GLOBAL STATE & CONFIGURATION
- * Declared at the top level to ensure accessibility across all functions.
  */
 let enrollmentList = [];
 let currentSort = { column: "enrollment_id", direction: "desc" };
@@ -10,12 +9,13 @@ let totalRecords = 0;
 let allSections = [];
 let allStudents = {};
 
+// Identify Role from PHP Session
+const userRole = "<?php echo $_SESSION['role']; ?>";
+const studentSessionId = "<?php echo $_SESSION['student_id'] ?? 0; ?>";
+
 /**
  * 2. CORE DATA HANDLERS (HOISTED)
- * These functions are defined at the top level so they can be referenced 
- * by the DOMContentLoaded listener and global window object.
  */
-
 async function fetchJSON(url, options = {}) {
   try {
     const res = await fetch(url, options);
@@ -34,10 +34,8 @@ async function saveEnrollment() {
     headers: { 'Content-Type': 'application/json' }, 
     body: JSON.stringify(payload) 
   });
-  if (resp.status === "success") { 
-    window.closeModal(); 
-    loadEnrollments(); 
-  } else alert(resp.message);
+  if (resp.status === "success") { window.closeModal(); loadEnrollments(); }
+  else alert(resp.message);
 }
 
 async function updateEnrollment() {
@@ -49,18 +47,14 @@ async function updateEnrollment() {
     headers: { 'Content-Type': 'application/json' }, 
     body: JSON.stringify(payload) 
   });
-  if (resp.status === "success") { 
-    window.closeModal(); 
-    loadEnrollments(); 
-  } else alert(resp.message);
+  if (resp.status === "success") { window.closeModal(); loadEnrollments(); }
+  else alert(resp.message);
 }
 
 /**
  * 3. UI INITIALIZATION & EVENT LISTENERS
- * Runs only after the HTML is fully parsed.
  */
 document.addEventListener("DOMContentLoaded", () => {
-  // Elements
   const modal = document.getElementById('enrollmentModal');
   const exportModal = document.getElementById('exportModal');
   const courseDetailsModal = document.getElementById('courseDetailsModal');
@@ -68,12 +62,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const exportDropdown = document.getElementById('export_student_id');
   const searchInput = document.getElementById('search');
 
-  // Initial Load
   loadStudents();
   loadSections();
   loadEnrollments();
 
-  // --- CRUD & TABLE ACTIONS ---
+  // Hide 'Add New' button for students
+  if (userRole === 'student') {
+    document.getElementById('openModalBtn').style.display = 'none';
+  }
+
   document.getElementById('saveBtn').onclick = saveEnrollment;
   document.getElementById('updateBtn').onclick = updateEnrollment;
 
@@ -86,12 +83,22 @@ document.addEventListener("DOMContentLoaded", () => {
     th.addEventListener('click', () => toggleSort(th.getAttribute('data-column')));
   });
 
-  // --- PDF EXPORT MODAL LOGIC ---
-  document.getElementById('exportPdfBtn').onclick = () => {
-    populateExportDropdown();
-    studentSearchInput.value = "";
-    exportModal.style.display = 'block';
-    document.body.style.overflow = 'hidden';
+  // PDF Export Logic with Identity Filter
+    document.getElementById('exportPdfBtn').onclick = (e) => {
+      // Prevent default behavior if it's a link
+      const role = window.PHP_VARS.userRole;
+      const sId = window.PHP_VARS.studentId;
+
+      if (role === 'student') {
+        // 1. Direct Convert: No modal shown
+        window.location.href = `php/export_pdf.php?student_id=${sId}`;
+      } else {
+        // 2. Staff View: Show the modal for selection
+        populateExportDropdown();
+        document.getElementById('studentSearchInput').value = "";
+        exportModal.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    }
   };
 
   studentSearchInput.addEventListener('input', function() {
@@ -108,13 +115,6 @@ document.addEventListener("DOMContentLoaded", () => {
     window.closeModal();
   };
 
-  // --- MODAL UTILITIES ---
-  document.getElementById('openModalBtn').onclick = () => {
-    document.getElementById('modalTitle').innerText = "Add New Enrollment";
-    modal.style.display = 'block';
-    document.body.style.overflow = 'hidden';
-  };
-
   window.closeModal = () => {
     modal.style.display = 'none';
     exportModal.style.display = 'none';
@@ -123,23 +123,19 @@ document.addEventListener("DOMContentLoaded", () => {
     clearForm();
   };
 
-  // Close buttons logic
   ['closeModalBtn', 'cancelBtn', 'closeExportModalBtn', 'cancelExportBtn', 
    'closeCourseDetailsBtn', 'closeCourseDetailsModalBtn'].forEach(id => {
     const btn = document.getElementById(id);
     if (btn) btn.onclick = window.closeModal;
   });
 
-  // Dropdown Filtering
   document.getElementById('enrollment_type').onchange = updateSectionDropdown;
   document.getElementById('student_id').onchange = updateSectionDropdown;
 
-  // Click Outside to Close
   window.onclick = e => {
     if (e.target === modal || e.target === exportModal || e.target === courseDetailsModal) window.closeModal();
   };
 
-  // Expose Functions to Dynamic Table Buttons
   window.editEnrollment = editEnrollment;
   window.deleteEnrollment = deleteEnrollment;
   window.openCourseDetailsModal = openCourseDetailsModal;
@@ -148,6 +144,38 @@ document.addEventListener("DOMContentLoaded", () => {
 /**
  * 4. SUPPORTING LOGIC FUNCTIONS
  */
+async function loadEnrollments(query = "") {
+  const url = `php/get_enrollment.php?search=${encodeURIComponent(query)}&sort_by=${currentSort.column}&order=${currentSort.direction}&page=${currentPage}&limit=${rowsPerPage}`;
+  const response = await fetchJSON(url);
+  const data = response.data || [];
+  totalRecords = response.total_records || 0;
+
+  const tbody = document.querySelector('#enrollmentTable tbody');
+  tbody.innerHTML = data.length ? "" : '<tr><td colspan="7" class="no-data">No enrollments found</td></tr>';
+
+  const isAdminOrFaculty = (userRole === 'super_admin' || userRole === 'faculty');
+
+  data.forEach(e => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${e.enrollment_id}</td>
+        <td>${e.student_name}</td>
+        <td>${e.section_code}</td>
+        <td>${e.enrollment_type}</td>
+        <td>${e.date_enrolled}</td>
+        <td>${e.status}</td>
+        <td class="actions-cell">
+          <button class="action-btn show-courses-btn" onclick="openCourseDetailsModal(${e.student_id})">Courses</button>
+          ${isAdminOrFaculty ? `
+            <button class="action-btn edit-btn" onclick="editEnrollment(${e.enrollment_id})">Edit</button>
+            <button class="action-btn delete-btn" onclick="deleteEnrollment(${e.enrollment_id})">Delete</button>
+          ` : ''}
+        </td>
+      </tr>`;
+  });
+  renderPagination();
+  updateSortIndicators();
+}
 
 async function loadStudents() {
   const data = await fetchJSON('php/fetch_students.php');

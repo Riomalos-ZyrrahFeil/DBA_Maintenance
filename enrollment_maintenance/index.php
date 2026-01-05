@@ -1,9 +1,15 @@
 <?php
 session_start();
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'faculty') {
-  header("Location: ../index.php");
-  exit();
+
+// Identify allowed roles for this page
+$allowed_roles = ['faculty', 'super_admin', 'student'];
+
+if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role'], $allowed_roles)) {
+    header("Location: ../login/login.html"); // Redirect to login if unauthorized
+    exit();
 }
+
+$user_role = $_SESSION['role'];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -147,6 +153,13 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'faculty') {
       </div>
     </main>
   </div>
+  <script>
+    // Pass PHP session data to JavaScript
+    window.PHP_VARS = {
+        userRole: "<?php echo $_SESSION['role']; ?>",
+        studentId: "<?php echo $_SESSION['student_id'] ?? 0; ?>"
+    };
+  </script>
   <script src="script.js"></script>
 </body>
 </html>
