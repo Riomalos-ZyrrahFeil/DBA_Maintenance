@@ -1,4 +1,42 @@
 document.addEventListener("DOMContentLoaded", () => {
+    const modal = document.getElementById("formModal");
+    const addBtn = document.getElementById("addBtn");
+    const closeBtn = document.querySelector(".close-modal");
+    const modalTitle = document.getElementById("modalTitle");
+    const saveBtn = document.getElementById("saveBtn");
+    const updateBtn = document.getElementById("updateBtn");
+    const cancelBtn = document.getElementById("cancelBtn");
+
+    const searchBar = document.getElementById("search");
+    if (searchBar) {
+        searchBar.addEventListener("input", filterTable);
+    }
+
+    // Modal Control Logic
+    const openModal = (title = "Add New Term") => {
+        modalTitle.innerText = title;
+        modal.style.display = "block";
+        document.body.style.overflow = "hidden";
+    };
+
+    const closeModal = () => {
+        modal.style.display = "none";
+        document.body.style.overflow = "auto";
+        resetForm();
+    };
+
+    // Original Event Listeners
+    if (addBtn) {
+        addBtn.onclick = () => {
+            openModal("Add New Term");
+            saveBtn.style.display = "inline-block";
+            updateBtn.style.display = "none";
+        };
+    }
+
+    if (closeBtn) closeBtn.onclick = closeModal;
+    if (cancelBtn) cancelBtn.onclick = closeModal;
+    window.onclick = (e) => { if (e.target === modal) closeModal(); };
     loadTerms();
 
     document.getElementById("saveBtn").addEventListener("click", addTerm);
@@ -86,6 +124,7 @@ function addTerm() {
 }
 
 // Populate form for editing
+// Populate form for editing
 function editTerm(id) {
     fetch(`php/get_term.php`)
         .then(res => res.json())
@@ -97,10 +136,16 @@ function editTerm(id) {
             document.getElementById("term_code").value = term.term_code;
             document.getElementById("start_date").value = term.start_date;
             document.getElementById("end_date").value = term.end_date;
-
             document.getElementById("saveBtn").style.display = "none";
             document.getElementById("updateBtn").style.display = "inline-block";
             document.getElementById("cancelBtn").style.display = "inline-block";
+
+            const modalTitle = document.getElementById("modalTitle");
+            const modal = document.getElementById("formModal");
+            
+            modalTitle.innerText = "Edit Term";
+            modal.style.display = "block";
+            document.body.style.overflow = "hidden";
         });
 }
 
@@ -129,11 +174,11 @@ function updateTerm() {
     .then(res => res.json())
     .then(data => {
         if (data.status === "success") {
-            alert("Term updated successfully!"); // ✅ Alert on success
+            alert("Term updated successfully!");
             resetForm();
             loadTerms();
         } else {
-            alert("Error updating term: " + data.message); // ✅ Alert on error
+            alert("Error updating term: " + data.message);
         }
     })
     .catch(err => {
@@ -179,22 +224,21 @@ function resetForm() {
 
 // Search filter
 function filterTable() {
-    const filter = document.getElementById("searchInput").value.toLowerCase();
+    const filter = document.getElementById("search").value.toLowerCase();
     const tbody = document.getElementById("termTableBody");
     const rows = Array.from(tbody.querySelectorAll("tr"));
     let hasVisible = false;
 
-    // Remove any existing no-data row first
-    rows.forEach(row => {
-        if (row.classList.contains("no-data")) {
-            row.remove();
-        }
-    });
+    const existingNoData = tbody.querySelector(".no-data-row");
+    if (existingNoData) existingNoData.remove();
 
-    // Filter rows
     rows.forEach(row => {
+        if (row.classList.contains("no-data-row")) return;
+
         const termCode = row.cells[1].textContent.toLowerCase();
-        if (termCode.includes(filter)) {
+        const startDate = row.cells[2].textContent.toLowerCase();
+
+        if (termCode.includes(filter) || startDate.includes(filter)) {
             row.style.display = "";
             hasVisible = true;
         } else {
@@ -202,10 +246,11 @@ function filterTable() {
         }
     });
 
-    // If no rows are visible, show "No terms found"
-    if (!hasVisible) {
+    if (!hasVisible && rows.length > 0) {
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td colspan="5" class="no-data">No terms found</td>`;
+        tr.className = "no-data-row";
+        tr.innerHTML = `<td colspan="5" class="no-data" 
+            style="text-align:center; font-style:italic;">No terms found</td>`;
         tbody.appendChild(tr);
     }
 }

@@ -1,4 +1,4 @@
-/* RESET & BASE */
+/* RESET & BASE STYLES */
 * {
     margin: 0;
     padding: 0;
@@ -7,129 +7,103 @@
 }
 
 body {
-    background-color: #f4f6f8;
+    background-color: transparent;
     color: #333;
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
 }
 
 /* CONTAINER */
 .container {
-    max-width: 1400px;
-    margin: 1rem 3rem;
-    padding: 1rem;
-}
-
-/* HEADER */
-h1 {
-    text-align: center;
-    color: #800000;
-    margin-bottom: 2rem;
-    font-size: 2rem;
-    letter-spacing: 1px;
-}
-
-/* FORM STYLES */
-.form-container {
-    background-color: #fff;
-    padding: 25px 30px;
-    border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-    margin-bottom: 2rem;
-}
-
-.form-row {
+    width: 100%;
+    max-width: 100%;
     display: flex;
     flex-direction: column;
-    margin-bottom: 15px;
+    gap: 20px;
+}
+
+/* HEADER SECTION */
+.content-header {
+    display: flex;
+    flex-direction: row; 
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #eee;
+}
+
+.content-header h1 {
+    color: var(--primary-maroon);
+    font-size: 2rem;
+}
+
+/* --- MODAL STYLING --- */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 5000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6); 
+    backdrop-filter: blur(3px);
+    overflow-y: auto;          
+}
+
+.modal-content.card {
+    background-color: #fff !important;
+    margin: 5vh auto;
+    padding: 2.5rem;
+    width: 90%;
+    max-width: 550px;
+    border-radius: 12px;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    text-align: left;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from { transform: translateY(-30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.close-modal {
+    position: absolute;
+    right: 20px;
+    top: 15px;
+    font-size: 28px;
+    cursor: pointer;
+    color: #888;
+}
+
+/* --- FORM STYLING --- */
+.form-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 15px;
 }
 
 .form-row label {
     font-weight: 600;
-    margin-bottom: 6px;
+    margin-bottom: 5px;
+    font-size: 0.85rem;
 }
 
-.form-row input,
-.form-row select {
+.form-row input {
+    width: 100%;
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 8px;
-    transition: border-color 0.2s ease;
 }
 
-.form-row input:focus,
-.form-row select:focus {
-    border-color: #800000;
-    outline: none;
-}
-
-/* FORM BUTTONS */
-.form-buttons {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    margin-top: 15px;
-}
-
-.form-buttons button {
-    padding: 10px 25px;
-    border: none;
-    border-radius: 8px;
-    color: #fff;
-    background-color: #800000;
-    cursor: pointer;
-    font-weight: 500;
-    transition: background 0.3s, transform 0.2s;
-}
-
-.form-buttons button:hover {
-    background-color: #b30000;
-    transform: translateY(-2px);
-}
-
-/* SEARCH + EXPORT */
-.table-actions {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-.table-actions input {
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    flex: 1;
-    transition: border-color 0.2s ease;
-}
-
-.table-actions input:focus {
-    border-color: #800000;
-    outline: none;
-}
-
-.table-actions button {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 8px;
-    background-color: #800000;
-    color: #fff;
-    cursor: pointer;
-    transition: background 0.3s;
-}
-
-.table-actions button:hover {
-    background-color: #b30000;
-}
-
-/* TABLE STYLES */
-.table-container {
+/* --- TABLE & ACTION STYLES --- */
+.table-container.card {
+    width: 100%;
+    padding: 20px;
     background-color: #fff;
     border-radius: 12px;
-    padding: 20px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.08);
 }
 
@@ -138,74 +112,147 @@ table {
     border-collapse: collapse;
 }
 
-thead {
-    background-color: #800000;
-    color: #fff;
-}
-
-th, td {
+thead th {
+    background-color: var(--primary-maroon);
+    color: white;
     padding: 12px 15px;
     text-align: left;
-    border-bottom: 1px solid #ddd;
 }
 
-tbody tr:nth-child(even) {
-    background-color: #f9f9f9;
+td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #eee;
 }
 
-tbody tr:hover {
-    background-color: #f1f1f1;
-}
-
-/* ACTION BUTTONS */
-.actions button {
+.action-btn {
     padding: 6px 12px;
     border: none;
     border-radius: 6px;
     color: #fff;
     cursor: pointer;
-    font-size: 0.9rem;
-    transition: background 0.3s;
+    font-weight: 600;
 }
 
-.actions .edit-btn {
-    background-color: #4CAF50;
+/* --- BUTTON STYLES --- */
+.primary-btn {
+    background-color: var(--primary-maroon);
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.3s, transform 0.2s;
 }
 
-.actions .edit-btn:hover {
-    background-color: #3c9e42;
+.primary-btn:hover {
+    background-color: var(--hover-maroon);
+    transform: translateY(-1px);
 }
 
-.actions .delete-btn {
-    background-color: #dc3545;
+.secondary-btn {
+    background-color: #6c757d;
+    color: white;
+    padding: 10px 25px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: opacity 0.3s;
 }
 
-.actions .delete-btn:hover {
-    background-color: #b02a37;
+.secondary-btn:hover {
+    opacity: 0.9;
 }
 
-#termTable thead th[data-column] {
-  cursor: pointer;
-  user-select: none;
-  transition: color 0.2s ease;
-  position: relative;
+.form-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 25px;
 }
 
-#termTable thead th[data-column] .sort-arrow {
-  font-size: 0.8em;
-  margin-left: 5px;
-  color: inherit; /* arrow inherits th color */
-}
-
-#termTable thead th[data-column]:hover {
-  color: #007bff; /* text and arrow change on hover */
-}
-
-
-/* NO DATA MESSAGE */
-.no-data {
+/* --- TABLE ACTION BUTTONS --- */
+.actions .action-btn {
+    display: inline-block;     /* Allow width/height/padding to work */
+    padding: 6px 12px;         /* Give the text some room */
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    min-width: 70px;           /* Ensure consistent button size */
     text-align: center;
-    font-style: italic;
-    color: #666;
-    padding: 15px 0;
+}
+
+.actions .edit-btn { background-color: #4CAF50; color: white; padding: 6px 12px; border-radius: 6px; border: none; cursor: pointer; }
+.actions .delete-btn { background-color: #dc3545; color: white; padding: 6px 12px; border-radius: 6px; border: none; cursor: pointer; }
+
+/* --- SEARCH & EXPORT --- */
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    gap: 15px;
+}
+
+#search {
+    padding: 10px 15px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    width: 100%;
+    max-width: 300px;
+}
+
+.export-buttons button, .primary-btn {
+    background-color: var(--primary-maroon);
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.secondary-btn {
+    background-color: #6c757d;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+}
+
+/* --- SAVE BUTTON STYLING --- */
+#saveBtn, #updateBtn {
+    background-color: var(--primary-maroon);
+    color: #ffffff;
+    padding: 12px 30px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(128, 0, 0, 0.2);
+}
+
+#saveBtn:hover, #updateBtn:hover {
+    background-color: var(--hover-maroon);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(128, 0, 0, 0.3);
+}
+
+#saveBtn:active, #updateBtn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(128, 0, 0, 0.2);
+}
+
+#saveBtn:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
 }
