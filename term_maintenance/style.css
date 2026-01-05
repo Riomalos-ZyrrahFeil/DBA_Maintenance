@@ -174,15 +174,15 @@ td {
 
 /* --- TABLE ACTION BUTTONS --- */
 .actions .action-btn {
-    display: inline-block;     /* Allow width/height/padding to work */
-    padding: 6px 12px;         /* Give the text some room */
+    display: inline-block;
+    padding: 6px 12px;
     border: none;
     border-radius: 6px;
     color: #fff;
     cursor: pointer;
     font-size: 0.85rem;
     font-weight: 600;
-    min-width: 70px;           /* Ensure consistent button size */
+    min-width: 70px;
     text-align: center;
 }
 

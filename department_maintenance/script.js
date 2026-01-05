@@ -1,12 +1,58 @@
 let departmentList = [];
-let currentSort = { column: "dept_id", direction: "asc" }; // default sorting
+let currentSort = { column: "dept_id", direction: "asc" };
 let currentPage = 1;
 const rowsPerPage = 10;
 let totalPages = 1;
 let totalRecords = 0;
 
 document.addEventListener("DOMContentLoaded", () => {
+  const modal = document.getElementById("formModal");
+  const addBtn = document.getElementById("addBtn");
+  const closeBtn = document.querySelector(".close-modal");
+  const cancelBtn = document.getElementById("cancelBtn");
+  const saveBtn = document.getElementById("saveBtn");
+  const updateBtn = document.getElementById("updateBtn");
+  const modalTitle = document.getElementById("modalTitle");
+
+  const deptFields = {
+      id: document.getElementById("department_id"),
+      code: document.getElementById("department_code"),
+      name: document.getElementById("department_name")
+  };
+
   loadDepartments();
+
+  const openModal = (title = "Add New Department") => {
+      modalTitle.innerText = title;
+      modal.style.display = "block";
+      document.body.style.overflow = "hidden";
+  };
+
+  const closeModal = () => {
+      modal.style.display = "none";
+      document.body.style.overflow = "auto";
+      clearForm();
+  };
+
+  if (addBtn) {
+      addBtn.onclick = () => {
+          openModal("Add New Department");
+          saveBtn.style.display = "inline-block";
+          updateBtn.style.display = "none";
+      };
+  }
+
+  if (closeBtn) closeBtn.onclick = closeModal;
+  if (cancelBtn) cancelBtn.onclick = closeModal;
+  window.onclick = (e) => { if (e.target === modal) closeModal(); };
+
+  document.getElementById("search").addEventListener("keyup", (e) => {
+      currentPage = 1;
+      loadDepartments(e.target.value.trim());
+  });
+
+  saveBtn.onclick = saveDepartment;
+  updateBtn.onclick = updateDepartment;
 
   document.getElementById("search").addEventListener("keyup", searchDepartments);
   document.getElementById("updateBtn").style.display = "none";
@@ -20,6 +66,18 @@ document.addEventListener("DOMContentLoaded", () => {
       toggleSort(column);
     });
   });
+
+  window.editDepartment = (dept) => {
+        deptFields.id.value = dept.dept_id;
+        deptFields.code.value = dept.dept_code;
+        deptFields.name.value = dept.dept_name;
+
+        saveBtn.style.display = "none";
+        updateBtn.style.display = "inline-block";
+        openModal("Edit Department");
+    };
+
+    window.closeModal = closeModal;
 });
 
 async function fetchJSON(url) {
