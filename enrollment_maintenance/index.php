@@ -1,11 +1,10 @@
 <?php
 session_start();
 
-// Identify allowed roles for this page
 $allowed_roles = ['faculty', 'super_admin', 'student'];
 
 if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role'], $allowed_roles)) {
-    header("Location: ../login/login.html"); // Redirect to login if unauthorized
+    header("Location: ../login/login.html");
     exit();
 }
 

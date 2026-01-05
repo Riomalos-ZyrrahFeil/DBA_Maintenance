@@ -49,13 +49,6 @@ $user_role = $_SESSION['role'] ?? 'student'; // Identify role
 							</a>
 					</li>
 			<?php endif; ?>
-
-			<?php if ($user_role === 'super_admin' ): ?>
-					<li class="nav-divider">System Utilities</li>
-            <li><a href="#" onclick="triggerBackup()">Backup (Identify System)</a></li>
-            <li><a href="#" onclick="document.getElementById('restoreFile').click()">Restore (New Install)</a></li>
-            <input type="file" id="restoreFile" style="display:none" onchange="handleRestore(this)">
-			<?php endif; ?>
 		</ul>
 	</nav>
 

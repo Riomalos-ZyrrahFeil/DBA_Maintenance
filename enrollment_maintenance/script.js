@@ -66,7 +66,6 @@ document.addEventListener("DOMContentLoaded", () => {
   loadSections();
   loadEnrollments();
 
-  // Hide 'Add New' button for students
   if (userRole === 'student') {
     document.getElementById('openModalBtn').style.display = 'none';
   }
@@ -83,17 +82,13 @@ document.addEventListener("DOMContentLoaded", () => {
     th.addEventListener('click', () => toggleSort(th.getAttribute('data-column')));
   });
 
-  // PDF Export Logic with Identity Filter
     document.getElementById('exportPdfBtn').onclick = (e) => {
-      // Prevent default behavior if it's a link
       const role = window.PHP_VARS.userRole;
       const sId = window.PHP_VARS.studentId;
 
       if (role === 'student') {
-        // 1. Direct Convert: No modal shown
         window.location.href = `php/export_pdf.php?student_id=${sId}`;
       } else {
-        // 2. Staff View: Show the modal for selection
         populateExportDropdown();
         document.getElementById('studentSearchInput').value = "";
         exportModal.style.display = 'block';

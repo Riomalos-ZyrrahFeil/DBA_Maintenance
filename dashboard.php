@@ -41,51 +41,52 @@ if ($user_role === 'student') {
     <?php include('component/sidebar.php'); ?>
 
     <main class="main-content">
-      <header style="margin-bottom: 2rem;">
+      <header style="margin-bottom: 2.5rem;">
           <h1>Welcome, <?php echo ($user_role === 'student') ? $student_name : 'System Administrator'; ?></h1>
-          <p>Role: <strong><?php echo ucwords(str_replace('_', ' ', $user_role)); ?></strong></p>
+          <p>Logged in as: <span style="color: var(--primary-maroon); font-weight: 600;"><?php echo ucwords(str_replace('_', ' ', $user_role)); ?></span></p>
       </header>
-        
-      <div class="dash-container">
-        <div class="stat-grid">
+      
+      <div class="stat-grid">
           <?php if ($user_role === 'student'): ?>
-            <div class="stat-card">
-              <h3>My Enrolled Subjects</h3>
-              <p class="number"><?php echo $my_enrollments; ?></p>
-            </div>
-            <div class="stat-card">
-              <h3>Current Status</h3>
-              <p class="number" style="font-size: 1.5rem;">Regular</p>
-            </div>
+              <div class="stat-card">
+                  <h3>My Enrolled Subjects</h3>
+                  <p class="number"><?php echo $my_enrollments; ?></p>
+              </div>
+              <div class="stat-card">
+                  <h3>Current Status</h3>
+                  <p class="number" style="font-size: 1.8rem;">Regular</p>
+              </div>
           <?php else: ?>
-            <div class="stat-card">
-              <h3>Total Students</h3>
-              <p class="number"><?php echo $total_students; ?></p>
-            </div>
-            <div class="stat-card">
-              <h3>Active Enrollments</h3>
-              <p class="number"><?php echo $total_enrollments; ?></p>
-            </div>
-            <div class="stat-card">
-              <h3>Current Sections</h3>
-              <p class="number"><?php echo $total_sections; ?></p>
-            </div>
+              <div class="stat-card">
+                  <h3>Total Students</h3>
+                  <p class="number"><?php echo number_format($total_students); ?></p>
+              </div>
+              <div class="stat-card">
+                  <h3>Active Enrollments</h3>
+                  <p class="number"><?php echo number_format($total_enrollments); ?></p>
+              </div>
+              <div class="stat-card">
+                  <h3>Current Sections</h3>
+                  <p class="number"><?php echo number_format($total_sections); ?></p>
+              </div>
           <?php endif; ?>
-        </div>
-
-        <?php if ($user_role === 'super_admin'): ?>
-          <div class="admin-utilities card" style="margin-top: 2rem; padding: 20px;">
-            <h2>System Utilities</h2>
-            <hr>
-            <div class="util-buttons" style="display: flex; gap: 15px; margin-top: 15px;">
-              <button onclick="triggerBackup()" class="primary-btn">Backup System (Identify Tables)</button>
-              <button onclick="document.getElementById('restoreFile').click()" class="secondary-btn">Restore System (New Install)</button>
-              <input type="file" id="restoreFile" style="display:none" onchange="handleRestore(this)">
-            </div>
-          </div>
-        <?php endif; ?>
       </div>
-    </main>
+
+      <?php if ($user_role === 'super_admin'): ?>
+      <div class="admin-utilities card">
+          <h2>System Maintenance Tools</h2>
+          <div class="util-buttons">
+              <button onclick="triggerBackup()" class="primary-btn">
+                  <i class="fas fa-database"></i> Generate System Backup
+              </button>
+              <button onclick="document.getElementById('restoreFile').click()" class="secondary-btn">
+                  <i class="fas fa-upload"></i> Restore from File
+              </button>
+              <input type="file" id="restoreFile" style="display:none" onchange="handleRestore(this)">
+          </div>
+      </div>
+      <?php endif; ?>
+  </main>
   </div>
 
   <script>
