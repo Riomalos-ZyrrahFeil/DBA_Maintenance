@@ -1,32 +1,73 @@
 let instructorList = [];
-let currentSort = { column: "instructor_id", direction: "asc" }; // default sorting
+let currentSort = { column: "instructor_id", direction: "asc" };
 
 document.addEventListener("DOMContentLoaded", () => {
+  const modal = document.getElementById("formModal");
+  const addBtn = document.getElementById("addBtn");
+  const closeBtn = document.querySelector(".close-modal");
+  const cancelBtn = document.getElementById("cancelBtn");
+  const saveBtn = document.getElementById("saveBtn");
+  const updateBtn = document.getElementById("updateBtn");
+  const modalTitle = document.getElementById("modalTitle");
+
   loadDepartments();
   loadInstructors();
 
-  const saveBtn = document.getElementById("saveBtn");
-  const updateBtn = document.getElementById("updateBtn");
-  const cancelBtn = document.getElementById("cancelBtn");
-  const searchInput = document.getElementById("searchInput");
+  const openModal = (title = "Add New Instructor") => {
+    modalTitle.innerText = title;
+    modal.style.display = "block";
+    document.body.style.overflow = "hidden";
+  };
 
-  searchInput.addEventListener("keyup", searchInstructors);
+  const closeModal = () => {
+    modal.style.display = "none";
+    document.body.style.overflow = "auto";
+    clearForm();
+  };
 
-  // Sorting headers
-  document.querySelectorAll("#instructorTable thead th[data-column]").forEach(th => {
-    th.addEventListener("click", () => {
-      toggleSort(th.getAttribute("data-column"));
-    });
+  if (addBtn) {
+    addBtn.onclick = () => {
+      openModal("Add New Instructor");
+      saveBtn.style.display = "inline-block";
+      updateBtn.style.display = "none";
+    };
+  }
+
+  if (closeBtn) closeBtn.onclick = closeModal;
+  if (cancelBtn) cancelBtn.onclick = closeModal;
+  window.onclick = (e) => { if (e.target === modal) closeModal(); };
+
+  document.getElementById("search").addEventListener("keyup", (e) => {
+    loadInstructors(e.target.value.trim());
   });
+
+  saveBtn.onclick = saveInstructor;
+  updateBtn.onclick = updateInstructor;
+
+  document.querySelectorAll("#instructorTable thead th[data-column]").forEach((th) => {
+    th.addEventListener("click", () => toggleSort(th.getAttribute("data-column")));
+  });
+
+  window.editInstructor = (instr) => {
+    document.getElementById("instructor_id").value = instr.instructor_id;
+    document.getElementById("last_name").value = instr.last_name;
+    document.getElementById("first_name").value = instr.first_name;
+    document.getElementById("email").value = instr.email;
+    document.getElementById("dept_id").value = instr.dept_id;
+
+    saveBtn.style.display = "none";
+    updateBtn.style.display = "inline-block";
+    openModal("Edit Instructor");
+  };
+
+  window.closeModal = closeModal;
 });
 
-// Load Departments dynamically
 async function loadDepartments() {
-  const deptSelect = document.getElementById("dept_id");
   try {
     const res = await fetch("../department_maintenance/php/fetch_department.php");
     const data = await res.json();
-
+    const deptSelect = document.getElementById("dept_id");
     deptSelect.innerHTML = '<option value="">Select Department</option>';
     data.forEach(dept => {
       const option = document.createElement("option");
@@ -34,55 +75,40 @@ async function loadDepartments() {
       option.textContent = dept.dept_name;
       deptSelect.appendChild(option);
     });
-  } catch (err) {
-    console.error("Error loading departments:", err);
-  }
+  } catch (err) { console.error("Error loading departments:", err); }
 }
 
-// Load Instructors dynamically
 async function loadInstructors(query = "") {
-  const sortBy = currentSort.column || "instructor_id";
-  const order = currentSort.direction || "asc";
-  const tbody = document.querySelector("#instructorTable tbody");
-
+  const url = `php/get_instructor.php?search=${encodeURIComponent(query)}&sort_by=${currentSort.column}&order=${currentSort.direction}`;
   try {
-    const res = await fetch(`php/get_instructor.php?search=${encodeURIComponent(query)}&sort_by=${sortBy}&order=${order}`);
+    const res = await fetch(url);
     const data = await res.json();
-
     instructorList = data;
+    const tbody = document.querySelector("#instructorTable tbody");
     tbody.innerHTML = "";
 
-    if (!Array.isArray(data) || data.length === 0) {
+    if (data.length === 0) {
       tbody.innerHTML = `<tr><td colspan="5" class="no-data">No instructors found</td></tr>`;
-      updateSortIndicators();
-      return;
+    } else {
+      data.forEach(instr => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${instr.instructor_id}</td>
+            <td>${instr.first_name} ${instr.last_name}</td>
+            <td>${instr.email}</td>
+            <td>${instr.dept_name}</td>
+            <td>
+              <button class="action-btn edit-btn" onclick='editInstructor(${JSON.stringify(instr)})'>Edit</button>
+              <button class="action-btn delete-btn" onclick='deleteInstructor(${instr.instructor_id})'>Delete</button>
+            </td>
+          </tr>`;
+      });
     }
-
-    data.forEach(instr => {
-      tbody.innerHTML += `
-        <tr>
-          <td>${instr.instructor_id}</td>
-          <td>${instr.first_name} ${instr.last_name}</td>
-          <td>${instr.email}</td>
-          <td>${instr.dept_name}</td>
-          <td>
-            <button class="action-btn edit-btn" onclick='editInstructor(${JSON.stringify(instr)})'>Edit</button>
-            <button class="action-btn delete-btn" onclick='deleteInstructor(${instr.instructor_id})'>🗑 Delete</button>
-          </td>
-        </tr>
-      `;
-    });
-
     updateSortIndicators();
-  } catch (err) {
-    console.error("Error loading instructors:", err);
-  }
+  } catch (err) { console.error("Error loading instructors:", err); }
 }
 
-// Save Instructor
-function saveInstructor(e) {
-  if(e) e.preventDefault(); // optional, won't hurt
-
+function saveInstructor() {
   const payload = {
     last_name: document.getElementById("last_name").value.trim(),
     first_name: document.getElementById("first_name").value.trim(),
@@ -90,10 +116,7 @@ function saveInstructor(e) {
     dept_id: document.getElementById("dept_id").value
   };
 
-  if (!payload.last_name || !payload.first_name || !payload.email || !payload.dept_id) {
-    alert("Please fill in all fields.");
-    return;
-  }
+  if (!payload.last_name || !payload.first_name || !payload.email || !payload.dept_id) return alert("Fill all fields");
 
   fetch("php/add_instructor.php", {
     method: "POST",
@@ -103,17 +126,14 @@ function saveInstructor(e) {
   .then(res => res.json())
   .then(msg => {
     alert(msg.message);
-    if(msg.status === "success") { // only clear and reload on success
-        clearForm();
-        loadInstructors();
+    if(msg.status === "success") {
+      window.closeModal();
+      loadInstructors();
     }
-  })
-  .catch(err => console.error("Error saving instructor:", err));
+  });
 }
 
-function updateInstructor(e) {
-  if(e) e.preventDefault();
-
+function updateInstructor() {
   const payload = {
     instructor_id: document.getElementById("instructor_id").value,
     last_name: document.getElementById("last_name").value.trim(),
@@ -121,11 +141,6 @@ function updateInstructor(e) {
     email: document.getElementById("email").value.trim(),
     dept_id: document.getElementById("dept_id").value
   };
-
-  if (!payload.instructor_id) {
-    alert("No instructor selected for update.");
-    return;
-  }
 
   fetch("php/update_instructor.php", {
     method: "POST",
@@ -136,30 +151,14 @@ function updateInstructor(e) {
   .then(msg => {
     alert(msg.message);
     if(msg.status === "success") {
-        clearForm();
-        loadInstructors();
+      window.closeModal();
+      loadInstructors();
     }
-  })
-  .catch(err => console.error("Error updating instructor:", err));
+  });
 }
 
-// Edit Instructor
-function editInstructor(instr) {
-  document.getElementById("instructor_id").value = instr.instructor_id;
-  document.getElementById("last_name").value = instr.last_name;
-  document.getElementById("first_name").value = instr.first_name;
-  document.getElementById("email").value = instr.email;
-  document.getElementById("dept_id").value = instr.dept_id;
-
-  document.getElementById("saveBtn").style.display = "none";
-  document.getElementById("updateBtn").style.display = "inline-block";
-  document.getElementById("cancelBtn").style.display = "inline-block";
-}
-
-// Delete Instructor
 function deleteInstructor(id) {
-  if (!confirm("Are you sure you want to delete this instructor?")) return;
-
+  if (!confirm("Are you sure?")) return;
   fetch("php/delete_instructor.php", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -168,75 +167,18 @@ function deleteInstructor(id) {
   .then(res => res.json())
   .then(msg => {
     alert(msg.message);
-
-    if (msg.status === "success") {
-      // Remove the instructor from the local array
-      instructorList = instructorList.filter(instr => instr.instructor_id !== id);
-
-      // Re-render the table without the deleted instructor
-      const tbody = document.querySelector("#instructorTable tbody");
-      tbody.innerHTML = "";
-
-      if (instructorList.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="no-data">No instructors found</td></tr>`;
-      } else {
-        instructorList.forEach(instr => {
-          tbody.innerHTML += `
-            <tr>
-              <td>${instr.instructor_id}</td>
-              <td>${instr.first_name} ${instr.last_name}</td>
-              <td>${instr.email}</td>
-              <td>${instr.dept_name}</td>
-              <td>
-                <button class="action-btn edit-btn" onclick='editInstructor(${JSON.stringify(instr)})'>Edit</button>
-                <button class="action-btn delete-btn" onclick='deleteInstructor(${instr.instructor_id})'>🗑 Delete</button>
-              </td>
-            </tr>
-          `;
-        });
-      }
-
-      updateSortIndicators();
-    }
-  })
-  .catch(err => console.error("Error deleting instructor:", err));
+    loadInstructors(document.getElementById("search").value.trim());
+  });
 }
 
-
-// Clear form
 function clearForm() {
-  document.getElementById("instructor_id").value = "";
-  document.getElementById("last_name").value = "";
-  document.getElementById("first_name").value = "";
-  document.getElementById("email").value = "";
-  document.getElementById("dept_id").value = "";
-
-  document.getElementById("saveBtn").style.display = "inline-block";
-  document.getElementById("updateBtn").style.display = "none";
-  document.getElementById("cancelBtn").style.display = "none";
+  ["instructor_id", "last_name", "first_name", "email", "dept_id"].forEach(id => document.getElementById(id).value = "");
 }
 
-// Cancel Edit
-function cancelEdit() {
-  clearForm();
-}
-
-// Search Instructors
-function searchInstructors(e) {
-  const query = e.target.value.trim();
-  loadInstructors(query);
-}
-
-// Sorting
 function toggleSort(column) {
-  if (currentSort.column === column) {
-    currentSort.direction = currentSort.direction === "asc" ? "desc" : "asc";
-  } else {
-    currentSort.column = column;
-    currentSort.direction = "asc";
-  }
-  const query = document.getElementById("searchInput").value.trim();
-  loadInstructors(query);
+  currentSort.direction = (currentSort.column === column && currentSort.direction === "asc") ? "desc" : "asc";
+  currentSort.column = column;
+  loadInstructors(document.getElementById("search").value.trim());
 }
 
 function updateSortIndicators() {
@@ -245,22 +187,9 @@ function updateSortIndicators() {
     const isActive = col === currentSort.column;
     let label = th.getAttribute("data-label") || th.textContent.replace(/ ▲| ▼| ↕/g, "").trim();
     th.setAttribute("data-label", label);
-
-    if (isActive) {
-      th.innerHTML = `${label} ${currentSort.direction === "asc" ? "▲" : "▼"}`;
-      th.classList.add("active-sort");
-    } else {
-      th.innerHTML = `${label} ↕`;
-      th.classList.remove("active-sort");
-    }
+    th.innerHTML = `${label} ${isActive ? (currentSort.direction === "asc" ? "▲" : "▼") : "↕"}`;
   });
 }
 
-// Export
-function exportExcel() {
-  window.location.href = "php/export_excel.php";
-}
-
-function exportPDF() {
-  window.location.href = "php/export_pdf.php";
-}
+function exportExcel() { window.location.href = "php/export_excel.php"; }
+function exportPDF() { window.location.href = "php/export_pdf.php"; }

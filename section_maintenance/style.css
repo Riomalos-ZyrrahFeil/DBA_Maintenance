@@ -1,4 +1,4 @@
-/* ===== Global Styles ===== */
+/* RESET & BASE STYLES */
 * {
   margin: 0;
   padding: 0;
@@ -7,396 +7,275 @@
 }
 
 body {
-  background-color: #f4f6f8;
+  background-color: transparent;
   color: #333;
+}
+
+/* CONTAINER */
+.container {
+  width: 100%;
+  max-width: 100%;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  padding: 30px;
+  gap: 20px;
 }
 
-/* ===== HEADER ===== */
-header {
-  text-align: center;
-  padding: 2rem 1rem;
-  background-color: #e4e6e8;
-  color: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+/* HEADER SECTION */
+.content-header {
+  display: flex;
+  flex-direction: row; 
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #eee;
 }
 
-h1 {
-  text-align: center;
-  color: #800000;
-  margin-bottom: 1.5rem;
+.content-header h1 {
+  color: var(--primary-maroon);
   font-size: 2rem;
-  letter-spacing: 1px;
 }
 
-.subtitle {
-  font-size: 0.95rem;
-  opacity: 0.85;
-  margin-top: 0.25rem;
+/* --- MODAL STYLING --- */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 5000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6); 
+  backdrop-filter: blur(3px);
+  overflow-y: auto;          
 }
 
-/* ===== CONTAINER ===== */
-.container {
-  max-width: 1400px;
-  margin: 1rem auto;
-  padding: 1rem;
-}
-
-/* ===== FORM CONTAINER ===== */
-.form-container {
-  background-color: #fff;
-  padding: 25px 30px;
+.modal-content.card {
+  background-color: #fff !important;
+  margin: 2vh auto;
+  padding: 2.5rem;
+  width: 95%;
+  max-width: 700px;
   border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-  margin-bottom: 2rem;
+  position: relative;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  text-align: left;
+  animation: slideDown 0.3s ease-out;
 }
 
-.form-container h2 {
-  margin-bottom: 1rem;
-  color: #800000;
-  text-align: center;
+@keyframes slideDown {
+  from { transform: translateY(-30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.close-modal {
+  position: absolute;
+  right: 20px;
+  top: 15px;
+  font-size: 28px;
+  cursor: pointer;
+  color: #888;
+  transition: color 0.2s;
+}
+
+.close-modal:hover { color: var(--primary-maroon); }
+
+/* --- FORM STYLING --- */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 15px;
+  margin-top: 15px;
 }
 
 .form-row {
   display: flex;
   flex-direction: column;
-  margin-bottom: 15px;
 }
 
 .form-row label {
   font-weight: 600;
-  margin-bottom: 6px;
+  margin-bottom: 5px;
+  display: block;
+  font-size: 0.85rem;
 }
 
-.form-row input,
-.form-row select {
+.form-row input, .form-row select {
+  width: 100%;
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 8px;
   transition: border-color 0.2s ease;
 }
 
-.form-row input:focus,
-.form-row select:focus {
-  border-color: #800000;
+.form-row input:focus, .form-row select:focus {
+  border-color: var(--primary-maroon);
   outline: none;
 }
 
-/* ===== FORM BUTTONS ===== */
-.form-buttons {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  margin-top: 15px;
-}
-
-button {
+/* --- BUTTON STYLES --- */
+.primary-btn, #saveBtn, #updateBtn {
+  background-color: var(--primary-maroon);
+  color: white;
   padding: 10px 25px;
   border: none;
   border-radius: 8px;
-  color: #fff;
-  background-color: #800000;
   cursor: pointer;
-  font-weight: 500;
+  font-weight: 600;
   transition: background 0.3s, transform 0.2s;
 }
 
-button:hover {
-  background-color: #b30000;
+.primary-btn:hover, #saveBtn:hover, #updateBtn:hover {
+  background-color: var(--hover-maroon);
   transform: translateY(-2px);
 }
 
-/* ===== SEARCH & EXPORT ===== */
-.search-export {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.search-export input {
-  flex: 1;
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  transition: border-color 0.2s ease;
-  min-width: 230px;
-}
-
-.search-export input:focus {
-  border-color: #800000;
-  outline: none;
-}
-
-.search-export button {
-  padding: 8px 16px;
+.secondary-btn, #cancelBtn {
+  background-color: #6c757d;
+  color: white;
+  padding: 10px 25px;
   border: none;
   border-radius: 8px;
-  background-color: #800000;
-  color: #fff;
   cursor: pointer;
-  transition: background 0.3s;
+  font-weight: 600;
 }
 
-.search-export button:hover {
-  background-color: #b30000;
+.form-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 25px;
+  grid-column: 1 / -1;
 }
 
-/* ===== TABLE CONTAINER ===== */
-.table-container {
+/* --- TABLE STYLES --- */
+.table-container.card {
+  width: 100%;
+  padding: 20px;
   background-color: #fff;
   border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-  overflow-x: auto;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
-  border-radius: 10px;
-  overflow: hidden;
-  font-size: 14px;
-}
-
-thead {
-  background-color: #800000;
-  color: #fff;
 }
 
 thead th {
+  background-color: var(--primary-maroon);
+  color: white;
   padding: 12px 15px;
   text-align: left;
+  cursor: pointer;
+  font-size: 0.85rem;
 }
 
-tbody td {
+td {
   padding: 12px 15px;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid #eee;
+  font-size: 0.85rem;
 }
 
-tbody tr:nth-child(even) {
-  background-color: #f9f9f9;
-}
-
-tbody tr:hover {
-  background-color: #f1f1f1;
-}
-
-/* ===== ACTION BUTTONS ===== */
-.editBtn,
-.deleteBtn {
+.action-btn, .edit-btn, .delete-btn {
   padding: 6px 12px;
   border: none;
   border-radius: 6px;
   color: #fff;
   cursor: pointer;
-  font-size: 0.9rem;
-  transition: background 0.3s;
-}
-
-.editBtn {
-  background-color: #4caf50;
-}
-
-.editBtn:hover {
-  background-color: #3c9e42;
-}
-
-.deleteBtn {
-  background-color: #dc3545;
-}
-
-.deleteBtn:hover {
-  background-color: #b02a37;
-}
-
-/* ===== MODAL STYLES ===== */
-.modal-overlay {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.6);
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.modal {
-  background: #fff;
-  width: 90%;
-  max-width: 600px;
-  max-height: 90vh;
-  border-radius: 12px;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid #ddd;
-  margin-bottom: 10px;
-}
-
-.modal-header h2 {
-  font-size: 1.4rem;
-  color: #333;
-}
-
-.close-modal {
-  background: none;
-  border: none;
-  font-size: 1.6rem;
-  cursor: pointer;
-  color: #555;
-}
-
-.modal-content {
-  overflow-y: auto;
-  padding-right: 10px;
-  flex: 1;
-}
-
-.modal-content::-webkit-scrollbar {
-  width: 6px;
-}
-
-.modal-content::-webkit-scrollbar-thumb {
-  background-color: #aaa;
-  border-radius: 6px;
-}
-
-/* Form inside modal */
-.form-row {
-  margin-bottom: 12px;
-  display: flex;
-  flex-direction: column;
-}
-
-.form-row label {
-  font-weight: bold;
-  margin-bottom: 5px;
-}
-
-.form-buttons {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  margin-top: 15px;
-}
-
-.form-buttons button {
-  flex: 1;
-  padding: 8px 12px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  background: #800000;
-  color: #fff;
+  font-size: 0.8rem;
   font-weight: 600;
+  min-width: 65px;
+  margin-right: 5px;
 }
 
-.form-buttons button:hover {
-  background: #b02a37;
-}
+.edit-btn { background-color: #28a745; }
+.edit-btn:hover { background-color: #218838; }
 
+.delete-btn { background-color: #dc3545; }
+.delete-btn:hover { background-color: #c82333; }
 
-/* ===== FOOTER ===== */
-footer {
-  text-align: center;
-  background-color: #800000;
-  color: white;
-  padding: 1rem;
-  margin-top: auto;
-  font-size: 0.9rem;
-}
-
-/* ===== RESPONSIVE ===== */
-@media (max-width: 768px) {
-  .form-row {
-    flex-direction: column;
-  }
-
-  .search-export {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .search-export input,
-  .search-export button {
-    width: 100%;
-  }
-}
-
-/* ===== “No Data” Message ===== */
-.no-data {
-  text-align: center;
-  font-style: italic;
-  color: #666;
-}
-
-#sectionTable tbody td:last-child {
-  display: flex; /* Makes the buttons sit side-by-side */
-  justify-content: center; /* Centers them in the cell */
+/* --- SEARCH & EXPORT --- */
+.table-header {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 8px; /* Space between buttons */
-  padding: 8px 5px;
-  min-width: 120px; /* Ensures the column has enough space */
+  margin-bottom: 1.5rem;
+  gap: 15px;
 }
 
-/* PAGINATION STYLES */
-.pagination-container {
+#search {
+  padding: 10px 15px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  width: 300px;
+  transition: all 0.3s ease;
+}
+
+#search:focus {
+  border-color: var(--primary-maroon);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(128, 0, 0, 0.1);
+}
+
+.export-buttons button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  background-color: var(--primary-maroon);
+  color: #fff;
+  cursor: pointer;
+  margin-left: 5px;
+}
+
+/* --- PAGINATION STYLING --- */
+.pagination-component {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-top: 20px;
-  padding: 10px 0;
-  border-top: 1px solid #ddd;
+  padding: 10px 20px;
+  border-top: 1px solid #eee;
 }
 
-#pagination-info {
-  font-size: 0.9rem;
+.pagination-info {
   color: #666;
   font-weight: 500;
+  font-size: 0.9rem;
 }
 
-#pagination-controls button {
-  background-color: #fff;
-  color: #800000;
-  border: 1px solid #800000;
-  padding: 8px 15px;
-  margin: 0 4px;
+.pagination-controls {
+  display: flex;
+  gap: 6px;
+}
+
+.page-button {
+  padding: 8px 12px;
+  min-width: 40px;
+  border: 1px solid #ccc;
   border-radius: 6px;
+  background-color: #fff;
+  color: var(--primary-maroon);
   cursor: pointer;
-  transition: background-color 0.3s, color 0.3s;
+  font-weight: 600;
+  font-size: 0.9rem;
 }
 
-#pagination-controls button:hover:not(:disabled) {
-  background-color: #800000;
+.page-button.active {
+  background-color: var(--primary-maroon);
   color: #fff;
+  border-color: var(--primary-maroon);
 }
 
-#pagination-controls button.active {
-  background-color: #800000;
-  color: #fff;
-  border-color: #800000;
-  font-weight: bold;
-}
-
-#pagination-controls button:disabled {
+.page-button:disabled {
   cursor: not-allowed;
-  opacity: 0.5;
-  background-color: #f1f1f1;
-  color: #999;
+  background-color: #f5f5f5;
+  color: #a0a0a0;
+}
+
+.no-data {
+  text-align: center;
+  font-style: italic;
+  color: #666;
+  padding: 20px;
 }

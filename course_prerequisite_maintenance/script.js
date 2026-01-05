@@ -1,256 +1,170 @@
 document.addEventListener("DOMContentLoaded", () => {
-    loadCourses();
-    loadPrereqList();
+  const modal = document.getElementById("formModal");
+  const addBtn = document.getElementById("addBtn");
+  const closeBtn = document.querySelector(".close-modal");
+  const cancelBtn = document.getElementById("cancelBtn");
+  const saveBtn = document.getElementById("saveBtn");
+  const updateBtn = document.getElementById("updateBtn");
+  const modalTitle = document.getElementById("modalTitle");
 
-    document.getElementById("saveBtn").addEventListener("click", addPrerequisite);
-    document.getElementById("updateBtn").addEventListener("click", updatePrerequisite);
-    document.getElementById("cancelBtn").addEventListener("click", resetForm);
+  loadCourses();
+  loadPrereqList();
 
-    document.getElementById("exportExcel").addEventListener("click", () => {
-        window.location.href = "php/export_excel.php";
+  const openModal = (title = "Add New Prerequisite") => {
+    modalTitle.innerText = title;
+    modal.style.display = "block";
+    document.body.style.overflow = "hidden";
+  };
+
+  const closeModal = () => {
+    modal.style.display = "none";
+    document.body.style.overflow = "auto";
+    resetForm();
+  };
+
+  if (addBtn) {
+    addBtn.onclick = () => {
+      openModal("Add New Prerequisite");
+      saveBtn.style.display = "inline-block";
+      updateBtn.style.display = "none";
+    };
+  }
+
+  if (closeBtn) closeBtn.onclick = closeModal;
+  if (cancelBtn) cancelBtn.onclick = closeModal;
+  window.onclick = (e) => { if (e.target === modal) closeModal(); };
+
+  document.getElementById("search").addEventListener("input", filterTable);
+  saveBtn.onclick = addPrerequisite;
+  updateBtn.onclick = updatePrerequisite;
+
+  document.querySelectorAll('#coursePrereqTable th[data-column]').forEach(header => {
+    header.addEventListener('click', () => {
+      const column = header.getAttribute('data-column');
+      const currentDirection = header.getAttribute('data-sort-dir') || 'asc';
+      const newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
+      sortTable(column, newDirection);
+      header.setAttribute('data-sort-dir', newDirection);
     });
+  });
 
-    document.getElementById("exportPDF").addEventListener("click", () => {
-        window.location.href = "php/export_pdf.php";
-    });
+  window.editPrerequisite = (id, courseId, prereqId) => {
+    document.getElementById("original_prereq_id").value = id;
+    document.getElementById("original_course_id").value = courseId;
+    document.getElementById("course_id").value = courseId;
+    document.getElementById("prereq_course_id").value = prereqId;
 
-    document.getElementById("searchInput").addEventListener("input", filterTable);
-    
-    document.querySelectorAll('#coursePrereqTable th[data-column]').forEach(header => {
-        header.addEventListener('click', () => {
-            const column = header.getAttribute('data-column');
-            const currentDirection = header.getAttribute('data-sort-dir') || 'asc';
-            const newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
-            
-            sortTable(column, newDirection);
-            document.querySelectorAll('#coursePrereqTable th[data-column]').forEach(h => {
-                h.removeAttribute('data-sort-dir');
-                h.querySelector('.sort-arrow').textContent = '↕';
-            });
-            header.setAttribute('data-sort-dir', newDirection);
-            header.querySelector('.sort-arrow').textContent = newDirection === 'asc' ? '▲' : '▼';
-        });
-    });
+    saveBtn.style.display = "none";
+    updateBtn.style.display = "inline-block";
+    openModal("Edit Prerequisite");
+  };
+
+  window.closeModal = closeModal;
 });
 
-// Load dropdown courses
-function loadCourses() {
-    fetch("http://localhost/dashboard/MaintenanceModule/course_prerequisite_maintenance/php/fetch_course.php")
-        .then(res => res.json())
-        .then(data => {
-            const courseSelect = document.getElementById("course_id");
-            const prereqSelect = document.getElementById("prereq_course_id");
-            courseSelect.innerHTML = "";
-            prereqSelect.innerHTML = "";
-            courseSelect.appendChild(document.createElement("option")).textContent = "-- Select Course --";
-            prereqSelect.appendChild(document.createElement("option")).textContent = "-- Select Prerequisite --";
+async function loadCourses() {
+  const res = await fetch("php/fetch_course.php");
+  const data = await res.json();
+  const cSel = document.getElementById("course_id");
+  const pSel = document.getElementById("prereq_course_id");
+  
+  cSel.innerHTML = '<option value="">-- Select Course --</option>';
+  pSel.innerHTML = '<option value="">-- Select Prerequisite --</option>';
 
-            data.forEach(course => {
-                const option1 = document.createElement("option");
-                option1.value = course.course_id;
-                option1.textContent = `${course.course_code} - ${course.title}`;
-                courseSelect.appendChild(option1);
-
-                const option2 = document.createElement("option");
-                option2.value = course.course_id;
-                option2.textContent = `${course.course_code} - ${course.title}`;
-                prereqSelect.appendChild(option2);
-            });
-        });
+  data.forEach(course => {
+    const opt = `<option value="${course.course_id}">${course.course_code} - ${course.title}</option>`;
+    cSel.innerHTML += opt;
+    pSel.innerHTML += opt;
+  });
 }
 
-// Load prerequisites table
 function loadPrereqList() {
-    fetch("php/get_prerequisites.php")
-        .then(res => res.json())
-        .then(data => {
-            const tbody = document.getElementById("coursePrereqTableBody");
-            tbody.innerHTML = "";
-
-            if (!Array.isArray(data) || data.length === 0) {
-                const tr = document.createElement("tr");
-                tr.innerHTML = `<td colspan="6" class="no-data">No prerequisites found</td>`;
-                tbody.appendChild(tr);
-
-                if (!Array.isArray(data)) {
-                    console.error("Invalid data returned:", data);
-                }
-                return;
-            }
-            data.forEach(item => {
-                const tr = document.createElement("tr");
-                tr.innerHTML = `
-                    <td>${item.prerequisite_id}</td>
-                    <td>${item.course_code}</td>
-                    <td>${item.course_title}</td>
-                    <td>${item.prerequisite_code}</td>
-                    <td>${item.prerequisite_title}</td>
-                    <td class="actions">
-                        <button class="edit-btn" onclick="editPrerequisite(${item.prerequisite_id}, ${item.course_id}, ${item.prerequisite_course_id})">Edit</button>
-                        <button class="delete-btn" onclick="deletePrerequisite(${item.prerequisite_id})">Delete</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        })
-        .catch(err => console.error("Error loading prerequisites:", err));
-}
-
-function sortTable(column, direction) {
-    const tbody = document.getElementById("coursePrereqTableBody");
-    const rows = Array.from(tbody.querySelectorAll("tr")).filter(r => !r.classList.contains("no-data"));
-    const columnIndexMap = {
-        'prerequisite_id': 0,
-        'course_code': 1,
-        'course_title': 2,
-        'prerequisite_code': 3,
-        'prerequisite_name': 4
-    };
-
-    const columnIndex = columnIndexMap[column];
-    if (columnIndex === undefined) return;
-    const isNumeric = column === 'prerequisite_id';
-
-    rows.sort((a, b) => {
-        let aText = a.cells[columnIndex].textContent.trim();
-        let bText = b.cells[columnIndex].textContent.trim();
-        let comparison = 0;
-        if (isNumeric) {
-            const aNum = parseInt(aText);
-            const bNum = parseInt(bText);
-            comparison = aNum - bNum;
-        } else {
-            comparison = aText.localeCompare(bText);
-        }
-        return direction === 'asc' ? comparison : comparison * -1;
+  fetch("php/get_prerequisites.php")
+    .then(res => res.json())
+    .then(data => {
+      const tbody = document.getElementById("coursePrereqTableBody");
+      tbody.innerHTML = "";
+      if (!data.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="no-data">No prerequisites found</td></tr>';
+        return;
+      }
+      data.forEach(item => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${item.prerequisite_id}</td>
+            <td>${item.course_code}</td>
+            <td>${item.course_title}</td>
+            <td>${item.prerequisite_code}</td>
+            <td>${item.prerequisite_title}</td>
+            <td class="actions">
+              <button class="action-btn edit-btn" onclick="editPrerequisite(${item.prerequisite_id}, ${item.course_id}, ${item.prerequisite_course_id})">Edit</button>
+              <button class="action-btn delete-btn" onclick="deletePrerequisite(${item.prerequisite_id})">Delete</button>
+            </td>
+          </tr>`;
+      });
     });
-    rows.forEach(row => tbody.appendChild(row));
 }
 
-// Add prerequisite
 function addPrerequisite() {
-    const course_id = document.getElementById("course_id").value;
-    const prereq_id = document.getElementById("prereq_course_id").value;
-    
-    if (course_id === "" || prereq_id === "" || course_id.includes("Select Course") || prereq_id.includes("Select Prerequisite")) {
-        alert("Please select both a Course and a Prerequisite Course.");
-        return;
-    }
-    
-    if (course_id === prereq_id) {
-        alert("A course cannot be its own prerequisite.");
-        return;
-    }
+  const c_id = document.getElementById("course_id").value;
+  const p_id = document.getElementById("prereq_course_id").value;
+  if (!c_id || !p_id) return alert("Select both courses");
+  if (c_id === p_id) return alert("Course cannot be its own prerequisite");
 
-    const formData = new FormData();
-    formData.append("course_id", course_id);
-    formData.append("prereq_course_id", prereq_id);
+  const fd = new FormData();
+  fd.append("course_id", c_id);
+  fd.append("prereq_course_id", p_id);
 
-    fetch("php/add_prerequisite.php", { method: "POST", body: formData })
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === "success") {
-                alert("Prerequisite added successfully!");
-                resetForm();
-                loadPrereqList();
-            } else {
-                alert("Error: " + data.message);
-            }
-        });
-}
-
-function editPrerequisite(prerequisite_id_row, course_id, prereq_course_id) {
-    document.getElementById("original_prereq_id").value = prerequisite_id_row;
-    document.getElementById("original_course_id").value = course_id; 
-
-    document.getElementById("course_id").value = course_id;
-    document.getElementById("prereq_course_id").value = prereq_course_id;
-
-    document.getElementById("saveBtn").style.display = "none";
-    document.getElementById("updateBtn").style.display = "inline-block";
+  fetch("php/add_prerequisite.php", { method: "POST", body: fd })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === "success") {
+        alert("Added!");
+        window.closeModal();
+        loadPrereqList();
+      }
+    });
 }
 
 function updatePrerequisite() {
-    const formData = new FormData();
-    formData.append("original_prereq_id", document.getElementById("original_prereq_id").value);
-    
-    formData.append("new_course_id", document.getElementById("course_id").value);
-    formData.append("new_prereq_id", document.getElementById("prereq_course_id").value);
+  const fd = new FormData();
+  fd.append("original_prereq_id", document.getElementById("original_prereq_id").value);
+  fd.append("new_course_id", document.getElementById("course_id").value);
+  fd.append("new_prereq_id", document.getElementById("prereq_course_id").value);
 
-    fetch("php/update_prerequisite.php", { method: "POST", body: formData })
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === "success") {
-                alert("Prerequisite updated successfully!");
-                resetForm();
-                loadPrereqList();
-            } else {
-                alert("Error: " + data.message);
-            }
-        });
-}
-
-// Delete prerequisite
-function deletePrerequisite(prerequisite_id) {
-    if (!confirm("Are you sure you want to delete this prerequisite?")) return;
-
-    const formData = new FormData();
-    formData.append("prerequisite_id_to_delete", prerequisite_id); 
-
-    fetch("php/delete_prerequisite.php", { method: "POST", body: formData })
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === "success") {
-                alert("Prerequisite successfully deleted!"); 
-                loadPrereqList();
-            } else {
-                alert("Error deleting prerequisite: " + data.message);
-            }
-        });
-}
-
-// Reset form
-function resetForm() {
-    document.getElementById("course_id").selectedIndex = 0;
-    document.getElementById("prereq_course_id").selectedIndex = 0;
-    document.getElementById("original_course_id").value = "";
-    document.getElementById("original_prereq_id").value = "";
-    document.getElementById("saveBtn").style.display = "inline-block";
-    document.getElementById("updateBtn").style.display = "none";
-}
-
-// Search / Filter
-function filterTable() {
-    const filter = document.getElementById("searchInput").value.toLowerCase();
-    const tbody = document.getElementById("coursePrereqTableBody");
-    const rows = Array.from(tbody.querySelectorAll("tr")).filter(r => !r.classList.contains("no-data"));
-
-    let visible = false;
-    rows.forEach(row => {
-        const course_code = row.cells[1].textContent.toLowerCase();
-        const course_title = row.cells[2].textContent.toLowerCase();
-        const prereq_code = row.cells[3].textContent.toLowerCase();
-        const prereq_name = row.cells[4].textContent.toLowerCase();
-
-        // Search by ANY of the four fields (Code or Title/Name)
-        if (course_code.includes(filter) || 
-            course_title.includes(filter) ||
-            prereq_code.includes(filter) ||
-            prereq_name.includes(filter)) 
-        { 
-            row.style.display = "";
-            visible = true;
-        } else {
-            row.style.display = "none";
-        }
+  fetch("php/update_prerequisite.php", { method: "POST", body: fd })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === "success") {
+        alert("Updated!");
+        window.closeModal();
+        loadPrereqList();
+      }
     });
-
-    const noDataRow = tbody.querySelector(".no-data");
-    if (!visible && !noDataRow) {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td colspan="6" class="no-data">No matches found</td>`;
-        tbody.appendChild(tr);
-    } else if (visible && noDataRow) {
-        noDataRow.remove();
-    }
 }
+
+function deletePrerequisite(id) {
+  if (!confirm("Are you sure?")) return;
+  const fd = new FormData();
+  fd.append("prerequisite_id_to_delete", id);
+  fetch("php/delete_prerequisite.php", { method: "POST", body: fd }).then(() => loadPrereqList());
+}
+
+function resetForm() {
+  document.getElementById("course_id").selectedIndex = 0;
+  document.getElementById("prereq_course_id").selectedIndex = 0;
+  document.getElementById("original_course_id").value = "";
+  document.getElementById("original_prereq_id").value = "";
+}
+
+function filterTable() {
+  const filter = document.getElementById("search").value.toLowerCase();
+  const rows = Array.from(document.querySelectorAll("#coursePrereqTableBody tr")).filter(r => !r.classList.contains("no-data"));
+  rows.forEach(row => {
+    const text = row.innerText.toLowerCase();
+    row.style.display = text.includes(filter) ? "" : "none";
+  });
+}
+
+function exportExcel() { window.location.href = "php/export_excel.php"; }
+function exportPDF() { window.location.href = "php/export_pdf.php"; }

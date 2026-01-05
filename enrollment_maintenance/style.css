@@ -1,368 +1,299 @@
-/* =================== Global =================== */
+/* RESET & BASE STYLES */
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: "Poppins", sans-serif;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
 }
 
 body {
-    background-color: #f4f6f8;
-    color: #333;
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
+  background-color: transparent;
+  color: #333;
 }
 
+/* CONTAINER */
 .container {
-    max-width: 1400px;
-    margin: 1rem auto;
-    padding: 1rem;
-    width: 95%;
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-/* =================== Heading =================== */
-header {
-    text-align: center;
-    padding: 2rem 1rem;
-    background-color: #e4e6e8;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+/* HEADER SECTION */
+.content-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #eee;
 }
 
-h1 {
-    text-align: center;
-    color: #800000;
-    margin-bottom: 2rem;
-    font-size: 2rem;
-    letter-spacing: 1px;
+.content-header h1 {
+  color: var(--primary-maroon);
+  font-size: 2rem;
 }
 
-/* =================== Form Container (Modal Content Styling) =================== */
-.form-container {
-    background-color: #fff;
-    padding: 25px 30px;
-    border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-    margin-bottom: 0; /* Adjusted for modal structure */
-}
-
-.form-container h2 {
-    margin-bottom: 1rem;
-    color: #800000;
-    text-align: center;
-}
-
-.form-row {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 15px;
-}
-
-.form-row label {
-    font-weight: 600;
-    margin-bottom: 6px;
-}
-
-.form-row input,
-.form-row select {
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    transition: border-color 0.2s ease;
-}
-
-.form-row input:focus,
-.form-row select:focus {
-    border-color: #800000;
-    outline: none;
-}
-
-/* =================== Course Display in New Modal =================== */
-/* Note: The ID is now #courseDetailsContent */
-#courseDetailsContent {
-    margin: 15px 0;
-    padding: 15px;
-    border: 1px solid #ddd;
-    border-left: 5px solid #800000; /* Maroon accent */
-    border-radius: 8px;
-    max-height: 200px;
-    overflow-y: auto;
-    background-color: #fcfcfc;
-    font-size: 0.9rem;
-}
-
-#courseDetailsContent h4 {
-    color: #800000;
-    margin-bottom: 8px;
-    font-size: 1rem;
-    font-weight: 700;
-}
-
-#courseDetailsContent ul {
-    list-style: none;
-    padding-left: 0;
-    margin-left: 5px;
-}
-
-#courseDetailsContent ul li {
-    padding: 4px 0;
-    border-bottom: 1px dotted #eee;
-}
-
-#courseDetailsContent ul li:last-child {
-    border-bottom: none;
-}
-
-#courseDetailsContent p.error {
-    color: #dc3545;
-}
-
-/* =================== Form Buttons =================== */
-.form-buttons {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    margin-top: 15px;
-}
-
-.form-buttons button {
-    padding: 10px 25px;
-    border: none;
-    border-radius: 8px;
-    color: #fff;
-    background-color: #800000;
-    cursor: pointer;
-    font-weight: 500;
-    transition: background 0.3s, transform 0.2s;
-}
-
-.form-buttons button:hover {
-    background-color: #b30000;
-    transform: translateY(-2px);
-}
-
-/* =================== Table Controls =================== */
-.table-controls {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-.table-controls input {
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    width: 230px;
-    transition: border-color 0.2s ease;
-}
-
-.table-controls input:focus {
-    border-color: #800000;
-    outline: none;
-}
-
-.table-controls button {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 8px;
-    background-color: #800000;
-    color: #fff;
-    cursor: pointer;
-    font-weight: 500;
-    transition: background 0.3s;
-}
-
-.table-controls button:hover {
-    background-color: #b30000;
-}
-
-/* =================== Table =================== */
-.table-container {
-    background-color: #fff;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-    overflow-x: auto;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    overflow: hidden;
-    border-radius: 10px;
-}
-
-thead {
-    background-color: #800000;
-    color: #fff;
-}
-
-th, td {
-    padding: 12px 15px;
-    text-align: left;
-    border-bottom: 1px solid #ddd;
-}
-
-tbody tr:nth-child(even) {
-    background-color: #f9f9f9;
-}
-
-tbody tr:hover {
-    background-color: #f1f1f1;
-    transition: background-color 0.2s;
-}
-
-/* =================== Action Buttons =================== */
-.action-btn {
-    padding: 6px 12px;
-    margin-right: 5px;
-    border: none;
-    border-radius: 6px;
-    color: #fff;
-    cursor: pointer;
-    font-size: 0.9rem;
-    transition: background 0.3s;
-}
-
-.action-btn.show-courses-btn {
-    background-color: #007bff; /* Blue for info button */
-}
-
-.action-btn.show-courses-btn:hover {
-    background-color: #0056b3;
-}
-
-.edit-btn {
-    background-color: #4CAF50;
-}
-
-.edit-btn:hover {
-    background-color: #3c9e42;
-}
-
-.delete-btn {
-    background-color: #dc3545;
-}
-
-.delete-btn:hover {
-    background-color: #b02a37;
-}
-
-/* =================== Footer =================== */
-footer {
-    text-align: center;
-    background-color: #800000;
-    color: white;
-    padding: 1rem;
-    margin-top: auto;
-    font-size: 0.9rem;
-}
-
-/* Optional: Table Header Sorting */
-thead th[data-column] {
-    cursor: pointer;
-    user-select: none;
-    transition: color 0.2s ease;
-    position: relative;
-}
-
-thead th[data-column]:hover {
-    color: #007bff;
-}
-
-/* No data message */
-.no-data {
-    text-align: center;
-    font-style: italic;
-    color: #666;
-}
-
-/* =================== Modal =================== */
+/* --- MODAL STYLING --- */
 .modal {
-    display: none; /* Hidden by default */
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0,0,0,0.5);
-    backdrop-filter: blur(2px);
-    justify-content: center;
-    align-items: center;
+  display: none;
+  position: fixed;
+  z-index: 5000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6); 
+  backdrop-filter: blur(3px);
+  overflow-y: auto;          
 }
 
-.modal-content {
-    background-color: #fff;
-    margin: auto;
-    padding: 20px 30px;
-    border-radius: 12px;
-    max-width: 500px;
-    width: 90%;
-    position: relative;
-    animation: slideDown 0.3s ease;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+#courseDetailsModal {
+  z-index: 6000;
+}
+
+.modal-content.card {
+  background-color: #fff !important;
+  margin: 5vh auto;
+  padding: 2.5rem;
+  width: 90%;
+  max-width: 550px;
+  border-radius: 12px;
+  position: relative;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  animation: slideDown 0.3s ease-out;
 }
 
 @keyframes slideDown {
-    from {transform: translateY(-20px); opacity: 0;}
-    to {transform: translateY(0); opacity: 1;}
+  from { transform: translateY(-30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
 .close-modal {
-    position: absolute;
-    top: 15px;
-    right: 20px;
-    font-size: 24px;
-    font-weight: bold;
-    color: #800000;
-    cursor: pointer;
-    transition: color 0.2s;
+  position: absolute;
+  right: 20px;
+  top: 15px;
+  font-size: 28px;
+  cursor: pointer;
+  color: #888;
+  transition: color 0.2s;
 }
 
-.close-modal:hover {
-    color: #b30000;
+.close-modal:hover { color: var(--primary-maroon); }
+
+#courseDetailsContent {
+  margin: 15px 0;
+  padding: 15px;
+  border-left: 5px solid var(--primary-maroon);
+  border-radius: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+  background-color: #fcfcfc;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
 }
 
-/* =================== Pagination Controls =================== */
-.pagination-controls {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-top: 20px;
-    gap: 10px;
+#courseDetailsContent ul {
+  list-style: none;
+  padding: 0;
 }
 
-.pagination-controls button {
-    padding: 8px 15px;
-    border: 1px solid #800000;
-    border-radius: 8px;
-    background-color: #fff;
-    color: #800000;
-    cursor: pointer;
-    font-weight: 500;
-    transition: background 0.2s, color 0.2s;
+#courseDetailsContent li {
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+  font-size: 0.9rem;
+  display: flex;
+  justify-content: space-between;
 }
 
-.pagination-controls button:hover:not(:disabled) {
-    background-color: #800000;
-    color: #fff;
+#courseDetailsContent li:last-child {
+  border-bottom: none;
 }
 
-.pagination-controls button:disabled {
-    cursor: not-allowed;
-    opacity: 0.5;
-    border-color: #ccc;
-    color: #666;
+#courseDetailsContent strong {
+  color: var(--primary-maroon);
 }
 
-.pagination-controls .page-info {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #333;
-    padding: 0 10px;
+/* --- FORM STYLING --- */
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 15px;
+}
+
+.form-row label {
+  font-weight: 600;
+  margin-bottom: 5px;
+  display: block;
+  font-size: 0.85rem;
+}
+
+.form-row input, .form-row select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.form-row input:focus, .form-row select:focus {
+  border-color: var(--primary-maroon);
+  outline: none;
+}
+
+/* --- BUTTON STYLES --- */
+.primary-btn, #saveBtn, #updateBtn {
+  background-color: var(--primary-maroon);
+  color: white;
+  padding: 10px 25px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.3s, transform 0.2s;
+}
+
+.primary-btn:hover, #saveBtn:hover, #updateBtn:hover {
+  background-color: var(--hover-maroon);
+  transform: translateY(-2px);
+}
+
+.secondary-btn, #cancelBtn, #closeCourseDetailsBtn {
+  background-color: #6c757d;
+  color: white;
+  padding: 10px 25px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.form-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 25px;
+}
+
+/* --- TABLE STYLES --- */
+.table-container.card {
+  width: 100%;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 800px;
+}
+
+thead th {
+  background-color: var(--primary-maroon);
+  color: white;
+  padding: 12px 15px;
+  text-align: left;
+  cursor: pointer;
+}
+
+td {
+  padding: 12px 15px;
+  border-bottom: 1px solid #eee;
+  font-size: 0.85rem;
+  vertical-align: middle;
+}
+
+td:last-child {
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* ACTION BUTTONS */
+.action-btn, .edit-btn, .delete-btn, .show-courses-btn {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-left: 4px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.show-courses-btn { background-color: #007bff; }
+.show-courses-btn:hover { background-color: #0056b3; }
+
+.edit-btn { background-color: #28a745; }
+.edit-btn:hover { background-color: #218838; }
+
+.delete-btn { background-color: #dc3545; }
+.delete-btn:hover { background-color: #c82333; }
+
+/* --- SEARCH & EXPORT --- */
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  gap: 15px;
+}
+
+#search {
+  padding: 10px 15px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  width: 300px;
+}
+
+#search:focus {
+  border-color: var(--primary-maroon);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(128, 0, 0, 0.1);
+}
+
+.export-buttons button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  background-color: var(--primary-maroon);
+  color: #fff;
+  cursor: pointer;
+  margin-left: 5px;
+}
+
+/* --- PAGINATION STYLING --- */
+.pagination-component {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+  padding: 15px 20px;
+  border-top: 1px solid #eee;
+}
+
+.page-button {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background-color: #fff;
+  color: var(--primary-maroon);
+  cursor: pointer;
+  font-weight: 600;
+  margin: 0 2px;
+}
+
+.page-button.active {
+  background-color: var(--primary-maroon);
+  color: #fff;
+}
+
+.no-data {
+  text-align: center;
+  font-style: italic;
+  color: #666;
+  padding: 20px;
 }
