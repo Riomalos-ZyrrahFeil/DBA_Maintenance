@@ -1,0 +1,160 @@
+:root {
+    --primary-maroon: #800000;
+    --hover-maroon: #b30000;
+    --bg-light: #f4f6f8;
+    --white: #ffffff;
+    --text-dark: #333333;
+    --text-muted: #666666;
+    --shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    --transition: 0.3s ease;
+}
+
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.login-page {
+    background-color: var(--bg-light);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    width: 100%;
+    font-family: "Poppins", sans-serif;
+}
+
+.login-container {
+    background-color: var(--white);
+    width: 95%;
+    max-width: 400px;
+    padding: 3rem 2rem;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    border-top: 6px solid var(--primary-maroon);
+    text-align: center;
+    box-sizing: border-box;
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.login-header h2 {
+    color: var(--primary-maroon);
+    margin: 0 0 0.5rem 0;
+    font-size: 1.75rem;
+}
+
+.login-header .subtitle {
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+    font-size: 0.95rem;
+}
+
+.role-selection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.2rem;
+    width: 100%;
+}
+
+.btn-role {
+    width: 100%;
+    max-width: 300px;
+    background-color: var(--white);
+    color: var(--primary-maroon);
+    border: 2px solid var(--primary-maroon);
+    padding: 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all var(--transition);
+}
+
+.btn-role:hover {
+    background-color: var(--primary-maroon);
+    color: var(--white);
+    transform: translateY(-2px);
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    gap: 1.2rem;
+}
+
+.input-group {
+    width: 100%;
+    max-width: 320px;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 0.9rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 1rem;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color var(--transition);
+}
+
+.input-group input:focus {
+    border-color: var(--primary-maroon);
+    box-shadow: 0 0 0 2px rgba(128, 0, 0, 0.05);
+}
+
+.btn-login {
+    width: 100%;
+    max-width: 320px;
+    background-color: var(--primary-maroon);
+    color: var(--white);
+    padding: 1rem;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background var(--transition), transform 0.2s;
+}
+
+.btn-login:hover {
+    background-color: var(--hover-maroon);
+}
+
+.btn-login:active {
+    transform: scale(0.98);
+}
+
+.btn-back {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    text-decoration: underline;
+    font-size: 0.85rem;
+    margin-top: 1.5rem;
+    cursor: pointer;
+    transition: color var(--transition);
+}
+
+.btn-back:hover {
+    color: var(--primary-maroon);
+}
+
+.hidden {
+    display: none !important;
+}
+
+.active-form {
+    display: flex !important;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    gap: 1.2rem;
+}

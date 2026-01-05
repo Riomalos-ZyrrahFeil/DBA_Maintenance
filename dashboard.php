@@ -1,3 +1,16 @@
+<?php
+session_start();
+
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'faculty') {
+    if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+        echo json_encode(['status' => 'error', 'message' => 'Unauthorized access.']);
+    } else {
+        header("Location: ../../index.php");
+    }
+    exit();
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,7 +22,7 @@
 <body>
     <header>
         <h1>PUP Maintenance System</h1>
-        <p class="subtitle">Manage all maintenance modules in one place</p>
+        <p class="subtitle">Welcome, Faculty | <a href="login/php/logout.php" style="color: white;">Logout</a></p>
     </header>
 
     <main class="container">

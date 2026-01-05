@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - PUP Maintenance System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="login-page">
+    <div class="login-container">
+        <header class="login-header">
+            <h2>PUP Maintenance</h2>
+            <p class="subtitle">Please select your role to continue</p>
+        </header>
+
+        <div class="role-selection" id="roleSelector">
+            <button type="button" class="btn-role" onclick="selectRole('faculty')">Faculty / Admin</button>
+            <button type="button" class="btn-role" onclick="selectRole('student')">Student</button>
+        </div>
+
+        <form action="php/login_process.php" method="POST" class="login-form hidden" id="loginForm">
+            <input type="hidden" name="role" id="selectedRole">
+            
+            <div class="input-group">
+                <input type="email" name="email" placeholder="Email Address" required>
+            </div>
+            
+            <div class="input-group">
+                <input type="password" name="password" placeholder="Password" required>
+            </div>
+            
+            <button type="submit" class="btn-login">Login as <span id="roleLabel"></span></button>
+            <button type="button" class="btn-back" onclick="resetRole()">Back to selection</button>
+        </form>
+    </div>
+
+    <script src="login.js"></script>
+</body>
+</html>
