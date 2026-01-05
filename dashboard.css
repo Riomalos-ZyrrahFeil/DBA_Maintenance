@@ -1,8 +1,8 @@
 /* 1. Global Variables & Theme Enhancement */
 :root {
     --primary-maroon: #800000;
-    --hover-maroon: #600000; /* Darker for better contrast */
-    --accent-gold: #FFD700;   /* PUP Accent color */
+    --hover-maroon: #600000;
+    --accent-gold: #FFD700;
     --bg-light: #f8f9fa;
     --white: #ffffff;
     --text-main: #2d3436;
@@ -26,14 +26,12 @@ body {
     overflow-x: hidden;
 }
 
-/* 3. Layout Wrapper */
 .dash-main-wrapper {
     display: flex;
     width: 100%;
     min-height: 100vh;
 }
 
-/* 4. Sidebar Container - Professional Refinement */
 .sidebar {
     width: 260px;
     background-color: var(--primary-maroon);

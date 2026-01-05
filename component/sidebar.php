@@ -1,6 +1,6 @@
 <?php
 $current_page = basename($_SERVER['PHP_PATH_INFO'] ?? $_SERVER['PHP_SELF']);
-$user_role = $_SESSION['role'] ?? 'student'; // Identify role
+$user_role = $_SESSION['role'] ?? 'student'; 
 ?>
 <div class="sidebar">
 	<div class="sidebar-header">
@@ -43,11 +43,11 @@ $user_role = $_SESSION['role'] ?? 'student'; // Identify role
 			<?php endif; ?>
 
 			<?php if ($user_role === 'student' || $user_role === 'super_admin' || $user_role === 'faculty'): ?>
-					<li class="<?php echo (strpos($_SERVER['PHP_SELF'], 'enrollment_maintenance') !== false) ? 'active' : ''; ?>">
-							<a href="/dashboard/MaintenanceModule/enrollment_maintenance/index.php">
-									<?php echo ($user_role === 'student') ? 'My Enrollment' : 'Enrollment'; ?>
-							</a>
-					</li>
+				<li class="<?php echo (strpos($_SERVER['PHP_SELF'], 'enrollment_maintenance') !== false) ? 'active' : ''; ?>">
+						<a href="/dashboard/MaintenanceModule/enrollment_maintenance/index.php">
+								<?php echo ($user_role === 'student') ? 'My Enrollment' : 'Enrollment'; ?>
+						</a>
+				</li>
 			<?php endif; ?>
 		</ul>
 	</nav>

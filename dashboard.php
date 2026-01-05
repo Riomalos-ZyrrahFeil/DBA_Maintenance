@@ -1,6 +1,6 @@
 <?php
 session_start();
-include './db.php'; // Required for $conn
+include './db.php';
 
 if (!isset($_SESSION['user_id'])) {
   header("Location: index.php");
@@ -8,22 +8,19 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $user_role = $_SESSION['role'] ?? 'student';
-$ref_id = $_SESSION['ref_id'] ?? 0; // Linked to student_id
+$ref_id = $_SESSION['ref_id'] ?? 0;
 
 if ($user_role === 'student') {
-  // Identify specific student's enrollment count
   $stmt = $conn->prepare("SELECT COUNT(*) FROM tbl_enrollment WHERE student_id = ? AND is_deleted = 0");
   $stmt->bind_param("i", $ref_id);
   $stmt->execute();
   $my_enrollments = $stmt->get_result()->fetch_row()[0];
 
-  // Identify student name
   $stmt = $conn->prepare("SELECT student_name FROM tbl_student WHERE student_id = ?");
   $stmt->bind_param("i", $ref_id);
   $stmt->execute();
   $student_name = $stmt->get_result()->fetch_assoc()['student_name'] ?? 'Student';
 } else {
-  // Global counts for Admin/Faculty
   $total_students = $conn->query("SELECT COUNT(*) FROM tbl_student WHERE is_deleted = 0")->fetch_row()[0];
   $total_enrollments = $conn->query("SELECT COUNT(*) FROM tbl_enrollment WHERE is_deleted = 0")->fetch_row()[0];
   $total_sections = $conn->query("SELECT COUNT(*) FROM tbl_section WHERE is_deleted = 0")->fetch_row()[0];

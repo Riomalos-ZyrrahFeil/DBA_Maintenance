@@ -1,8 +1,10 @@
 <?php
 session_start();
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'faculty') {
-  header("Location: ../index.php");
-  exit();
+$allowed_roles = ['faculty', 'super_admin'];
+
+if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role'], $allowed_roles)) {
+    header("Location: ../index.php");
+    exit();
 }
 ?>
 <!DOCTYPE html>
