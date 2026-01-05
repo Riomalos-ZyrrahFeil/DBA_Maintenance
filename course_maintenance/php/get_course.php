@@ -17,7 +17,6 @@ if (!in_array($sort_by, $valid_columns)) {
     $sort_by = 'course_id';
 }
 
-// ✅ Fetch single course by ID
 if ($id > 0) {
     $stmt = $conn->prepare("
         SELECT * FROM tbl_course 

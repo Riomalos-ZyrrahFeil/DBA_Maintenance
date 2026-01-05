@@ -1,8 +1,7 @@
 <?php
 include '../../db.php';
-require_once('../../tcpdf/TCPDF-6.10.0/TCPDF-6.10.0/tcpdf.php'); // Adjust path if needed
+require_once('../../tcpdf/TCPDF-6.10.0/TCPDF-6.10.0/tcpdf.php');
 
-// Create new PDF document
 $pdf = new TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
 
 // Set document information

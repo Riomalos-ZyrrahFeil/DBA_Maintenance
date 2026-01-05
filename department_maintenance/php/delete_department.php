@@ -3,7 +3,6 @@ error_reporting(E_ERROR | E_PARSE);
 header('Content-Type: application/json');
 include '../../db.php';
 
-// Read JSON input
 $data = json_decode(file_get_contents("php://input"), true);
 $id = $data['dept_id'] ?? '';
 

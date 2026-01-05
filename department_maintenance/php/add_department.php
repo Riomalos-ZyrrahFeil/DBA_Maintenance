@@ -3,13 +3,11 @@ error_reporting(E_ERROR | E_PARSE);
 header('Content-Type: application/json');
 include '../../db.php';
 
-// Read JSON input
 $data = json_decode(file_get_contents("php://input"), true);
 
 $code = $data['dept_code'] ?? '';
 $name = $data['dept_name'] ?? '';
 
-// Validate input
 if (empty($code) || empty($name)) {
     echo json_encode(["status" => "error", "message" => "All fields are required."]);
     exit;

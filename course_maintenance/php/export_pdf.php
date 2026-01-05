@@ -1,17 +1,14 @@
 <?php
 include '../../db.php';
-require_once('../../tcpdf/TCPDF-6.10.0/TCPDF-6.10.0/tcpdf.php'); // Adjust path if needed
+require_once('../../tcpdf/TCPDF-6.10.0/TCPDF-6.10.0/tcpdf.php');
 
-// Create new PDF document
 $pdf = new TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
 
-// Set document information
 $pdf->SetCreator('PUP System');
 $pdf->SetAuthor('PUP System');
 $pdf->SetTitle('Course List');
 $pdf->SetSubject('Course List');
 
-// Set margins and page setup
 $pdf->SetMargins(15, 20, 15);
 $pdf->SetAutoPageBreak(TRUE, 20);
 $pdf->AddPage();

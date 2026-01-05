@@ -48,7 +48,8 @@ body {
   overflow-y: auto;          
 }
 
-#courseDetailsModal {
+/* Specific z-index layering for overlapping modals */
+#courseDetailsModal, #exportModal {
   z-index: 6000;
 }
 
@@ -81,6 +82,7 @@ body {
 
 .close-modal:hover { color: var(--primary-maroon); }
 
+/* --- SPECIAL CONTENT DISPLAYS --- */
 #courseDetailsContent {
   margin: 15px 0;
   padding: 15px;
@@ -105,13 +107,8 @@ body {
   justify-content: space-between;
 }
 
-#courseDetailsContent li:last-child {
-  border-bottom: none;
-}
-
-#courseDetailsContent strong {
-  color: var(--primary-maroon);
-}
+#courseDetailsContent li:last-child { border-bottom: none; }
+#courseDetailsContent strong { color: var(--primary-maroon); }
 
 /* --- FORM STYLING --- */
 .form-grid {
@@ -141,7 +138,7 @@ body {
 }
 
 /* --- BUTTON STYLES --- */
-.primary-btn, #saveBtn, #updateBtn {
+.primary-btn, #saveBtn, #updateBtn, #confirmExportBtn {
   background-color: var(--primary-maroon);
   color: white;
   padding: 10px 25px;
@@ -152,12 +149,12 @@ body {
   transition: background 0.3s, transform 0.2s;
 }
 
-.primary-btn:hover, #saveBtn:hover, #updateBtn:hover {
+.primary-btn:hover, #saveBtn:hover, #updateBtn:hover, #confirmExportBtn:hover {
   background-color: var(--hover-maroon);
   transform: translateY(-2px);
 }
 
-.secondary-btn, #cancelBtn, #closeCourseDetailsBtn {
+.secondary-btn, #cancelBtn, #closeCourseDetailsBtn, #cancelExportBtn {
   background-color: #6c757d;
   color: white;
   padding: 10px 25px;
@@ -322,4 +319,35 @@ td:last-child {
   font-style: italic;
   color: #666;
   padding: 20px;
+}
+
+#export_student_id {
+  width: 100%;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 5px;
+  outline: none;
+}
+
+#export_student_id option {
+  padding: 8px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+}
+
+#export_student_id option:hover {
+  background-color: #f8f9fa;
+}
+
+#studentSearchInput {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  transition: border-color 0.2s;
+}
+
+#studentSearchInput:focus {
+  border-color: var(--primary-maroon);
+  outline: none;
 }

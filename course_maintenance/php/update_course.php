@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($stmt->execute()) {
                 if ($stmt->affected_rows > 0) {
                     $response['status'] = 'success';
-                    $response['message'] = '✅ Course updated successfully!';
+                    $response['message'] = 'Course updated successfully!';
                 } else {
                     $response['message'] = 'No changes were made.';
                 }

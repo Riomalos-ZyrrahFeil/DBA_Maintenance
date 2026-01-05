@@ -75,6 +75,13 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   window.closeModal = closeModal;
+  window.exportExcel = () => {
+    window.location.href = "php/export_excel.php";
+  };
+
+  window.exportPDF = () => {
+    window.location.href = "php/export_pdf.php";
+  };
 });
 
 function loadDropdowns() {

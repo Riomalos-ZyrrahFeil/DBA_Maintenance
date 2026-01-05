@@ -1,71 +1,84 @@
 <?php
 include '../../db.php';
-require_once('../../tcpdf/TCPDF-6.10.0/TCPDF-6.10.0/tcpdf.php'); // Adjust path if needed
+require_once('../../tcpdf/TCPDF-6.10.0/TCPDF-6.10.0/tcpdf.php'); 
 
-// Create new PDF document
+// Get the filter parameter
+$student_id = isset($_GET['student_id']) ? $_GET['student_id'] : 'all';
+
 $pdf = new TCPDF('L', 'mm', 'A4', true, 'UTF-8', false);
-
-// Document information
 $pdf->SetCreator('PUP System');
-$pdf->SetAuthor('PUP System');
 $pdf->SetTitle('Enrollment List');
-$pdf->SetSubject('Enrollment List');
-
-// Layout settings
 $pdf->SetMargins(15, 20, 15);
 $pdf->SetAutoPageBreak(TRUE, 20);
 $pdf->AddPage();
 
 $today = date("F d, Y");
 
-// Header
+// Update header if filtered
+$titleText = "Polytechnic University of the Philippines - Taguig Campus";
+$subTitle = "Full Enrollment Report";
+
+if ($student_id !== 'all') {
+  // Fetch name for the header
+  $nameRes = $conn->query("SELECT student_name FROM tbl_student WHERE student_id = " . intval($student_id));
+  $studentData = $nameRes->fetch_assoc();
+  $subTitle = "Enrollment Record: " . ($studentData['student_name'] ?? "Unknown Student");
+}
+
 $header = <<<EOD
-<h2 style="text-align:center; color:#800000;">Polytechnic University of the Philippines - Taguig Campus</h2>
+<h2 style="text-align:center; color:#800000;">$titleText</h2>
+<h3 style="text-align:center;">$subTitle</h3>
 <p style="text-align:center;">Date Created: $today</p>
 EOD;
 
 $pdf->writeHTML($header, true, false, true, false, '');
 
-// Table Header
 $html = '<table border="1" cellpadding="4" cellspacing="0" style="border-collapse: collapse; width: 100%;">';
 $html .= '<tr style="background-color:#800000; color:#ffffff; font-weight:bold;">
-            <th>Enrollment ID</th>
-            <th>Student ID</th>
-            <th>Section ID</th>
-            <th>Date Enrolled</th>
-            <th>Status</th>
-            <th>Letter Grade</th>
+            <th width="10%">ID</th>
+            <th width="30%">Student Name</th>
+            <th width="20%">Section Code</th>
+            <th width="15%">Date Enrolled</th>
+            <th width="15%">Status</th>
+            <th width="10%">Grade</th>
           </tr>';
 
-// Fetch data
-$result = $conn->query("SELECT * FROM tbl_enrollment WHERE is_deleted = 0 ORDER BY enrollment_id DESC");
+// Base SQL with JOINS
+$sql = "SELECT e.enrollment_id, s.student_name, sec.section_code, e.date_enrolled, e.status, e.letter_grade 
+        FROM tbl_enrollment e
+        JOIN tbl_student s ON e.student_id = s.student_id
+        JOIN tbl_section sec ON e.section_id = sec.section_id
+        WHERE e.is_deleted = 0";
+
+// Apply dynamic filter
+if ($student_id !== 'all') {
+  $sql .= " AND e.student_id = " . intval($student_id);
+}
+
+$sql .= " ORDER BY e.enrollment_id DESC";
+$result = $conn->query($sql);
 
 $i = 0;
 while ($row = $result->fetch_assoc()) {
-    $bg = $i % 2 === 0 ? '#ffffff' : '#f9f9f9';
-    $html .= '<tr style="background-color:' . $bg . ';">
-                <td>' . $row['enrollment_id'] . '</td>
-                <td>' . $row['student_id'] . '</td>
-                <td>' . $row['section_id'] . '</td>
-                <td>' . $row['date_enrolled'] . '</td>
-                <td>' . $row['status'] . '</td>
-                <td>' . $row['letter_grade'] . '</td>
-              </tr>';
-    $i++;
+  $bg = $i % 2 === 0 ? '#ffffff' : '#f9f9f9';
+  $html .= '<tr style="background-color:' . $bg . ';">
+              <td>' . $row['enrollment_id'] . '</td>
+              <td>' . $row['student_name'] . '</td>
+              <td>' . $row['section_code'] . '</td>
+              <td>' . $row['date_enrolled'] . '</td>
+              <td>' . $row['status'] . '</td>
+              <td>' . $row['letter_grade'] . '</td>
+            </tr>';
+  $i++;
 }
 
 $html .= '</table>';
-
-// Write table to PDF
 $pdf->writeHTML($html, true, false, true, false, '');
 
-// Footer
 $pdf->SetY(-30);
 $pdf->SetFont('helvetica', '', 10);
 $pdf->Cell(0, 10, "Printed on: $today | Page ".$pdf->getAliasNumPage()." of ".$pdf->getAliasNbPages(), 0, false, 'R');
 
-// Output PDF
 $pdf->Output('enrollments.pdf', 'I');
-
 $conn->close();
 ?>

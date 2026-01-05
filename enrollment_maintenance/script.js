@@ -1,3 +1,7 @@
+/**
+ * 1. GLOBAL STATE & CONFIGURATION
+ * Declared at the top level to ensure accessibility across all functions.
+ */
 let enrollmentList = [];
 let currentSort = { column: "enrollment_id", direction: "desc" };
 let currentPage = 1;
@@ -6,120 +10,150 @@ let totalRecords = 0;
 let allSections = [];
 let allStudents = {};
 
+/**
+ * 2. CORE DATA HANDLERS (HOISTED)
+ * These functions are defined at the top level so they can be referenced 
+ * by the DOMContentLoaded listener and global window object.
+ */
+
+async function fetchJSON(url, options = {}) {
+  try {
+    const res = await fetch(url, options);
+    return await res.json();
+  } catch (err) { 
+    console.error("Fetch Error:", err);
+    return { status: 'error', data: [] }; 
+  }
+}
+
+async function saveEnrollment() {
+  const payload = getFormData();
+  if (!payload) return;
+  const resp = await fetchJSON('php/add_enrollment.php', { 
+    method: 'POST', 
+    headers: { 'Content-Type': 'application/json' }, 
+    body: JSON.stringify(payload) 
+  });
+  if (resp.status === "success") { 
+    window.closeModal(); 
+    loadEnrollments(); 
+  } else alert(resp.message);
+}
+
+async function updateEnrollment() {
+  const payload = getFormData();
+  if (!payload) return;
+  payload.enrollment_id = document.getElementById('enrollment_id').value;
+  const resp = await fetchJSON('php/update_enrollment.php', { 
+    method: 'POST', 
+    headers: { 'Content-Type': 'application/json' }, 
+    body: JSON.stringify(payload) 
+  });
+  if (resp.status === "success") { 
+    window.closeModal(); 
+    loadEnrollments(); 
+  } else alert(resp.message);
+}
+
+/**
+ * 3. UI INITIALIZATION & EVENT LISTENERS
+ * Runs only after the HTML is fully parsed.
+ */
 document.addEventListener("DOMContentLoaded", () => {
+  // Elements
   const modal = document.getElementById('enrollmentModal');
-  const openModalBtn = document.getElementById('openModalBtn');
-  const closeModalBtn = document.getElementById('closeModalBtn');
-  const saveBtn = document.getElementById('saveBtn');
-  const updateBtn = document.getElementById('updateBtn');
-  const cancelBtn = document.getElementById('cancelBtn');
-  const studentSelect = document.getElementById('student_id');
-  const typeSelect = document.getElementById('enrollment_type');
+  const exportModal = document.getElementById('exportModal');
+  const courseDetailsModal = document.getElementById('courseDetailsModal');
+  const studentSearchInput = document.getElementById('studentSearchInput');
+  const exportDropdown = document.getElementById('export_student_id');
   const searchInput = document.getElementById('search');
 
+  // Initial Load
   loadStudents();
   loadSections();
   loadEnrollments();
 
-  const openModal = (title = "Enrollment Form") => {
-    document.getElementById('modalTitle').innerText = title;
-    modal.style.display = 'block';
-    document.body.style.overflow = 'hidden';
-  };
-
-  const closeModal = () => {
-    modal.style.display = 'none';
-    document.body.style.overflow = 'auto';
-    clearForm();
-  };
-
-  openModalBtn.onclick = () => { clearForm(); openModal("Add New Enrollment"); };
-  closeModalBtn.onclick = closeModal;
-  cancelBtn.onclick = closeModal;
-  window.onclick = e => { if (e.target === modal) closeModal(); };
+  // --- CRUD & TABLE ACTIONS ---
+  document.getElementById('saveBtn').onclick = saveEnrollment;
+  document.getElementById('updateBtn').onclick = updateEnrollment;
 
   searchInput.addEventListener('input', e => {
     currentPage = 1;
     loadEnrollments(e.target.value.trim());
   });
-  typeSelect.onchange = updateSectionDropdown;
-  studentSelect.onchange = updateSectionDropdown;
-
-  saveBtn.onclick = saveEnrollment;
-  updateBtn.onclick = updateEnrollment;
 
   document.querySelectorAll('#enrollmentTable thead th[data-column]').forEach(th => {
-    th.addEventListener('click', () => {
-      const column = th.getAttribute('data-column');
-      if (currentSort.column === column) {
-        currentSort.direction = currentSort.direction === "asc" ? "desc" : "asc";
-      } else {
-        currentSort.column = column;
-        currentSort.direction = "asc";
-      }
-      currentPage = 1;
-      loadEnrollments(searchInput.value.trim());
-    });
+    th.addEventListener('click', () => toggleSort(th.getAttribute('data-column')));
   });
 
-  async function populateCourseDetailsModal(studentId, studentName) {
-    const title = document.getElementById('courseDetailsTitle');
-    const content = document.getElementById('courseDetailsContent');
-    const modal = document.getElementById('courseDetailsModal');
+  // --- PDF EXPORT MODAL LOGIC ---
+  document.getElementById('exportPdfBtn').onclick = () => {
+    populateExportDropdown();
+    studentSearchInput.value = "";
+    exportModal.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+  };
 
-    title.textContent = `Enrolled Courses for ${studentName}`;
-    content.innerHTML = '<p>Loading course data...</p>';
+  studentSearchInput.addEventListener('input', function() {
+    const filter = this.value.toLowerCase();
+    const options = exportDropdown.options;
+    for (let i = 0; i < options.length; i++) {
+      if (options[i].value === "all") continue;
+      options[i].style.display = options[i].text.toLowerCase().includes(filter) ? "" : "none";
+    }
+  });
+
+  document.getElementById('confirmExportBtn').onclick = () => {
+    window.location.href = `php/export_pdf.php?student_id=${exportDropdown.value}`;
+    window.closeModal();
+  };
+
+  // --- MODAL UTILITIES ---
+  document.getElementById('openModalBtn').onclick = () => {
+    document.getElementById('modalTitle').innerText = "Add New Enrollment";
     modal.style.display = 'block';
-
-    const url = `php/fetch_student_enrollments.php?student_id=${studentId}`;
-    const response = await fetchJSON(url); 
-    
-    if (!response || response.status === 'error') {
-      content.innerHTML = `<p style="color: #dc3545;">Error loading enrollments.</p>`;
-      return;
-    }
-    
-    const enrollments = Array.isArray(response) ? response : (response.data || []);
-
-    if (enrollments.length === 0) {
-      content.innerHTML = `<p>Student has no current active enrollments.</p>`;
-    } else {
-      let html = '<ul style="list-style: none; padding-left: 0;">';
-      enrollments.forEach(e => {
-        html += `<li><strong>${e.course_code}</strong> (${e.section_code}) - <em>${e.status}</em></li>`;
-      });
-      html += '</ul>';
-      content.innerHTML = html;
-    }
-  }
-
-  window.openCourseDetailsModal = (studentId) => {
-    const student = allStudents[studentId];
-    const studentName = student ? student.student_name : `Student ID ${studentId}`;
-    populateCourseDetailsModal(studentId, studentName);
+    document.body.style.overflow = 'hidden';
   };
 
-  window.closeCourseDetailsModal = () => {
-    document.getElementById('courseDetailsModal').style.display = 'none';
+  window.closeModal = () => {
+    modal.style.display = 'none';
+    exportModal.style.display = 'none';
+    courseDetailsModal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+    clearForm();
   };
 
-  document.getElementById('closeCourseDetailsBtn').onclick = window.closeCourseDetailsModal;
-  document.getElementById('closeCourseDetailsModalBtn').onclick = window.closeCourseDetailsModal;
-  document.getElementById('exportExcelBtn').onclick = () => window.location.href = 'php/export_excel.php';
-  document.getElementById('exportPdfBtn').onclick = () => window.location.href = 'php/export_pdf.php';
+  // Close buttons logic
+  ['closeModalBtn', 'cancelBtn', 'closeExportModalBtn', 'cancelExportBtn', 
+   'closeCourseDetailsBtn', 'closeCourseDetailsModalBtn'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) btn.onclick = window.closeModal;
+  });
 
+  // Dropdown Filtering
+  document.getElementById('enrollment_type').onchange = updateSectionDropdown;
+  document.getElementById('student_id').onchange = updateSectionDropdown;
+
+  // Click Outside to Close
+  window.onclick = e => {
+    if (e.target === modal || e.target === exportModal || e.target === courseDetailsModal) window.closeModal();
+  };
+
+  // Expose Functions to Dynamic Table Buttons
   window.editEnrollment = editEnrollment;
   window.deleteEnrollment = deleteEnrollment;
-  window.closeModal = closeModal;
+  window.openCourseDetailsModal = openCourseDetailsModal;
 });
 
+/**
+ * 4. SUPPORTING LOGIC FUNCTIONS
+ */
 
 async function loadStudents() {
   const data = await fetchJSON('php/fetch_students.php');
   const select = document.getElementById('student_id');
   select.innerHTML = '<option value="">Select Student</option>';
   const students = Array.isArray(data) ? data : (data.data || []);
-  
   students.forEach(s => {
     select.innerHTML += `<option value="${s.student_id}">${s.student_name} (${s.student_id})</option>`;
     allStudents[s.student_id] = s;
@@ -136,25 +170,19 @@ function updateSectionDropdown() {
   const type = document.getElementById('enrollment_type').value;
   const studentId = document.getElementById('student_id').value;
   const sectionSelect = document.getElementById('section_id');
-
   sectionSelect.innerHTML = '<option value="">Select Section</option>';
-  if (!studentId) {
-    sectionSelect.disabled = true;
-    return;
-  }
+  if (!studentId) { sectionSelect.disabled = true; return; }
 
   const student = allStudents[studentId];
   sectionSelect.disabled = false;
 
-  let filtered = [];
-  if (type === 'Regular' && student) {
-    const [yr, sem] = student.year_level.split('-');
-    const progBase = student.program_code.replace(/-TG$/, '');
-    const target = `${progBase}-${yr}-${sem}-TG`;
-    filtered = allSections.filter(sec => sec.section_code === target);
-  } else {
-    filtered = allSections;
-  }
+  let filtered = (type === 'Regular' && student) 
+    ? allSections.filter(sec => {
+        const [yr, sem] = student.year_level.split('-');
+        const target = `${student.program_code.replace(/-TG$/, '')}-${yr}-${sem}-TG`;
+        return sec.section_code === target;
+      })
+    : allSections;
 
   filtered.forEach(sec => {
     sectionSelect.innerHTML += `<option value="${sec.section_id}">${sec.section_code} - ${sec.display_text || sec.year}</option>`;
@@ -168,47 +196,50 @@ async function loadEnrollments(query = "") {
   totalRecords = response.total_records || 0;
 
   const tbody = document.querySelector('#enrollmentTable tbody');
-  tbody.innerHTML = "";
+  tbody.innerHTML = data.length ? "" : '<tr><td colspan="7" class="no-data">No enrollments found</td></tr>';
 
-  if (data.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" class="no-data">No enrollments found</td></tr>';
-  } else {
-    data.forEach(e => {
-      tbody.innerHTML += `
-        <tr>
-          <td>${e.enrollment_id}</td>
-          <td>${e.student_name}</td>
-          <td>${e.section_code}</td>
-          <td>${e.enrollment_type}</td>
-          <td>${e.date_enrolled}</td>
-          <td>${e.status}</td>
-          <td class="actions-cell">
-            <button class="action-btn show-courses-btn" onclick="openCourseDetailsModal(${e.student_id})">Courses</button>
-            <button class="action-btn edit-btn" onclick="editEnrollment(${e.enrollment_id})">Edit</button>
-            <button class="action-btn delete-btn" onclick="deleteEnrollment(${e.enrollment_id})">Delete</button>
-          </td>
-        </tr>`;
-    });
-  }
+  data.forEach(e => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${e.enrollment_id}</td>
+        <td>${e.student_name}</td>
+        <td>${e.section_code}</td>
+        <td>${e.enrollment_type}</td>
+        <td>${e.date_enrolled}</td>
+        <td>${e.status}</td>
+        <td class="actions-cell">
+          <button class="action-btn show-courses-btn" onclick="openCourseDetailsModal(${e.student_id})">Courses</button>
+          <button class="action-btn edit-btn" onclick="editEnrollment(${e.enrollment_id})">Edit</button>
+          <button class="action-btn delete-btn" onclick="deleteEnrollment(${e.enrollment_id})">Delete</button>
+        </td>
+      </tr>`;
+  });
   renderPagination();
   updateSortIndicators();
 }
 
-async function saveEnrollment() {
-  const payload = getFormData();
-  if (!payload) return;
-  const resp = await fetchJSON('php/add_enrollment.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-  if (resp.status === "success") { window.closeModal(); loadEnrollments(); }
-  else alert(resp.message);
-}
+async function openCourseDetailsModal(studentId) {
+  const student = allStudents[studentId];
+  const title = document.getElementById('courseDetailsTitle');
+  const content = document.getElementById('courseDetailsContent');
+  const modal = document.getElementById('courseDetailsModal');
 
-async function updateEnrollment() {
-  const payload = getFormData();
-  if (!payload) return;
-  payload.enrollment_id = document.getElementById('enrollment_id').value;
-  const resp = await fetchJSON('php/update_enrollment.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-  if (resp.status === "success") { window.closeModal(); loadEnrollments(); }
-  else alert(resp.message);
+  title.textContent = `Enrolled Courses for ${student ? student.student_name : 'Student'}`;
+  content.innerHTML = '<p>Loading...</p>';
+  modal.style.display = 'block';
+
+  const response = await fetchJSON(`php/fetch_student_enrollments.php?student_id=${studentId}`);
+  const enrollments = Array.isArray(response) ? response : (response.data || []);
+
+  if (enrollments.length === 0) {
+    content.innerHTML = '<p>No current active enrollments.</p>';
+  } else {
+    let html = '<ul style="list-style: none; padding-left: 0;">';
+    enrollments.forEach(e => {
+      html += `<li><strong>${e.course_code}</strong> (${e.section_code}) - <em>${e.status}</em></li>`;
+    });
+    content.innerHTML = html + '</ul>';
+  }
 }
 
 async function editEnrollment(id) {
@@ -231,16 +262,6 @@ async function deleteEnrollment(id) {
   if (!confirm("Are you sure?")) return;
   const resp = await fetchJSON(`php/delete_enrollment.php?id=${id}`);
   if (resp.status === "success") loadEnrollments();
-  else alert(resp.message);
-}
-
-// Utility Helpers
-function clearForm() {
-  ["enrollment_id", "date_enrolled", "status", "letter_grade"].forEach(id => document.getElementById(id).value = "");
-  document.getElementById('student_id').value = "";
-  document.getElementById('enrollment_type').value = "Regular";
-  document.getElementById('saveBtn').style.display = 'inline-block';
-  document.getElementById('updateBtn').style.display = 'none';
 }
 
 function getFormData() {
@@ -252,79 +273,45 @@ function getFormData() {
     status: document.getElementById('status').value,
     letter_grade: document.getElementById('letter_grade').value
   };
-  if (!data.student_id || !data.section_id || !data.date_enrolled) {
-    alert("Please fill required fields");
-    return null;
-  }
+  if (!data.student_id || !data.section_id || !data.date_enrolled) { alert("Please fill required fields"); return null; }
   return data;
 }
 
-async function fetchJSON(url, options = {}) {
-  try {
-    const res = await fetch(url, options);
-    return await res.json();
-  } catch (err) { console.error(err); return { status: 'error', data: [] }; }
+function clearForm() {
+  ["enrollment_id", "date_enrolled", "status", "letter_grade"].forEach(id => document.getElementById(id).value = "");
+  document.getElementById('student_id').value = "";
+  document.getElementById('enrollment_type').value = "Regular";
+  document.getElementById('saveBtn').style.display = 'inline-block';
+  document.getElementById('updateBtn').style.display = 'none';
 }
 
 function toggleSort(column) {
-  if (currentSort.column === column) {
-    currentSort.direction = currentSort.direction === "asc" ? "desc" : "asc";
-  } else {
-    currentSort.column = column;
-    currentSort.direction = "asc";
-  }
-
+  currentSort.direction = (currentSort.column === column && currentSort.direction === "asc") ? "desc" : "asc";
+  currentSort.column = column;
   currentPage = 1;
-
-  const query = document.getElementById('search').value.trim();
-  loadEnrollments(query);
+  loadEnrollments(document.getElementById('search').value.trim());
 }
 
 function renderPagination() {
   const pages = Math.ceil(totalRecords / rowsPerPage);
   const controls = document.getElementById('pagination-controls');
   const info = document.getElementById('pagination-info');
-
   controls.innerHTML = '';
-  if (totalRecords === 0) {
-    info.textContent = "No records found.";
-    return;
-  }
-
-  const start = (currentPage - 1) * rowsPerPage + 1;
-  const end = Math.min(currentPage * rowsPerPage, totalRecords);
-  info.textContent = `Showing ${start} to ${end} of ${totalRecords} records (Page ${currentPage} of ${pages})`;
-
+  if (totalRecords === 0) { info.textContent = "No records found."; return; }
+  info.textContent = `Showing ${(currentPage - 1) * rowsPerPage + 1} to ${Math.min(currentPage * rowsPerPage, totalRecords)} of ${totalRecords}`;
   if (pages <= 1) return;
-
   const createBtn = (text, target, disabled, active = false) => {
     const btn = document.createElement('button');
-    btn.textContent = text;
-    btn.disabled = disabled;
-    btn.classList.add('page-button');
-    if (active) btn.classList.add('active');
-    
-    btn.onclick = () => { 
-      currentPage = target; 
-      loadEnrollments(document.getElementById('search').value.trim()); 
-    };
+    btn.textContent = text; btn.disabled = disabled; btn.className = 'page-button' + (active ? ' active' : '');
+    btn.onclick = () => { currentPage = target; loadEnrollments(document.getElementById('search').value.trim()); };
     controls.appendChild(btn);
   };
-
   createBtn('« Previous', currentPage - 1, currentPage === 1);
-
-  const maxButtons = 5;
-  let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
-  let endPage = Math.min(pages, startPage + maxButtons - 1);
-
-  if (endPage - startPage + 1 < maxButtons) {
-    startPage = Math.max(1, endPage - maxButtons + 1);
+  for (let i = 1; i <= pages; i++) {
+    if (i === 1 || i === pages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+      createBtn(i, i, i === currentPage, i === currentPage);
+    }
   }
-
-  for (let i = startPage; i <= endPage; i++) {
-    createBtn(i, i, i === currentPage, i === currentPage);
-  }
-
   createBtn('Next »', currentPage + 1, currentPage === pages);
 }
 
@@ -333,12 +320,14 @@ function updateSortIndicators() {
     const col = th.getAttribute('data-column');
     const label = th.getAttribute('data-label') || th.textContent.replace(/[↕▲▼]/g, '').trim();
     th.setAttribute('data-label', label);
-    if (col === currentSort.column) {
-      th.innerHTML = `${label} ${currentSort.direction === "asc" ? "▲" : "▼"}`;
-      th.classList.add('active-sort');
-    } else {
-      th.innerHTML = `${label} ↕`;
-      th.classList.remove('active-sort');
-    }
+    th.innerHTML = `${label} ${col === currentSort.column ? (currentSort.direction === "asc" ? "▲" : "▼") : "↕"}`;
+  });
+}
+
+function populateExportDropdown() {
+  const exportDropdown = document.getElementById('export_student_id');
+  exportDropdown.innerHTML = '<option value="all">All Students</option>';
+  Object.keys(allStudents).forEach(id => {
+    exportDropdown.innerHTML += `<option value="${id}">${allStudents[id].student_name}</option>`;
   });
 }

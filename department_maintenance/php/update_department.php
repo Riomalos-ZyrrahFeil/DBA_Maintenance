@@ -1,10 +1,8 @@
 <?php
 header("Content-Type: application/json");
 
-// --- Proceed with database update ---
 include "../../db.php";
 
-// Get the raw JSON input
 $data = json_decode(file_get_contents("php://input"), true);
 
 if (!isset($data['dept_id'], $data['dept_code'], $data['dept_name']) ||

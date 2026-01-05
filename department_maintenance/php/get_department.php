@@ -3,7 +3,6 @@ error_reporting(E_ERROR | E_PARSE);
 header('Content-Type: application/json');
 include '../../db.php';
 
-// --- GET PARAMETERS ---
 $search = $_GET['search'] ?? '';
 $sort_by = $_GET['sort_by'] ?? 'dept_id';
 $order = strtoupper($_GET['order'] ?? 'DESC');

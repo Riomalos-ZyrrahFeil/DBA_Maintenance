@@ -31,7 +31,7 @@ echo '<tr>
         <th style="background-color:#800000; color:#fff; font-weight:bold; text-align:center;">Units</th>
       </tr>';
 
-// Fetch courses (only those not deleted)
+// Fetch courses
 $result = $conn->query("SELECT * FROM tbl_course WHERE is_deleted = 0 ORDER BY course_id ASC");
 $i = 0;
 

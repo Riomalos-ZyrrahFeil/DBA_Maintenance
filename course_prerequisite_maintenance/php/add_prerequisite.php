@@ -10,7 +10,7 @@ if (!$course_id || !$prereq_id) {
     exit;
 }
 
-// 1. CHECK FOR EXISTING (DELETED or ACTIVE) RECORD
+// 1. CHECK FOR EXISTING RECORD
 $check_stmt = $conn->prepare("SELECT prerequisite_id, is_deleted FROM tbl_course_prerequisite WHERE course_id = ? AND prereq_course_id = ?");
 $check_stmt->bind_param("ii", $course_id, $prereq_id);
 $check_stmt->execute();

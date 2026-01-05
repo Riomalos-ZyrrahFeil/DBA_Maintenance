@@ -121,6 +121,29 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'faculty') {
             </div>
           </div>
         </div>
+
+        <div id="exportModal" class="modal">
+          <div class="modal-content card">
+            <span class="close-modal" id="closeExportModalBtn">&times;</span>
+            <h2 id="exportModalTitle">Export Enrollment Report</h2>
+            <hr>
+            <div class="form-grid">
+              <div class="form-row">
+                <label for="studentSearchInput">Search Student Name</label>
+                <input type="text" id="studentSearchInput" placeholder="Type to filter students..." autocomplete="off" style="margin-bottom: 10px;">
+                
+                <label for="export_student_id">Select Student</label>
+                <select id="export_student_id" size="5" style="height: auto;">
+                  <option value="all">All Students</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-buttons">
+              <button id="confirmExportBtn" class="primary-btn">Generate PDF</button>
+              <button id="cancelExportBtn" class="secondary-btn">Cancel</button>
+            </div>
+          </div>
+        </div>
       </div>
     </main>
   </div>

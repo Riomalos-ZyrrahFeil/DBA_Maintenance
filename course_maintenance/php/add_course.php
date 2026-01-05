@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->bind_param("ssiii", $course_code, $title, $lecture_hours, $lab_hours, $units);
             if ($stmt->execute()) {
                 $response['status'] = 'success';
-                $response['message'] = '✅ Course added successfully!';
+                $response['message'] = 'Course added successfully!';
             } else {
                 // Handle common issues like duplicate entries
                 if ($conn->errno == 1062) {
