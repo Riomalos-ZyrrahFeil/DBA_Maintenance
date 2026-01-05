@@ -1,74 +1,30 @@
 <?php
-session_start();
+session_start(); 
 
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'faculty') {
-    if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
-        echo json_encode(['status' => 'error', 'message' => 'Unauthorized access.']);
-    } else {
-        header("Location: ../../index.php");
-    }
+if (!isset($_SESSION['user_id'])) {
+    header("Location: index.php");
     exit();
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PUP Maintenance System</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Dashboard - PUP Maintenance</title>
+    <link rel="stylesheet" href="dashboard.css"> 
 </head>
 <body>
-    <header>
-        <h1>PUP Maintenance System</h1>
-        <p class="subtitle">Welcome, Faculty | <a href="login/php/logout.php" style="color: white;">Logout</a></p>
-    </header>
+    <div class="dash-main-wrapper">
+        <?php include('component/sidebar.php'); ?>
 
-    <main class="container">
-        <div class="card">
-            <a href="http://localhost/dashboard/MaintenanceModule/department_maintenance/index.html">Department Maintenance</a>
-        </div>
-
-        <div class="card">
-            <a href="http://localhost/dashboard/MaintenanceModule/course_maintenance/index.html">Course Maintenance</a>
-        </div>
-
-        <div class="card">
-            <a href="http://localhost/dashboard/MaintenanceModule/course_prerequisite_maintenance/index.html">Course Prerequisite Maintenance</a>
-        </div>
-
-        <div class="card">
-            <a href="http://localhost/dashboard/MaintenanceModule/term_maintenance/index.html">Term Maintenance</a>
-        </div>
-
-        <div class="card">
-            <a href="http://localhost/dashboard/MaintenanceModule/program_maintenance/index.html">Program Maintenance</a>
-        </div>
-
-        <div class="card">
-            <a href="http://localhost/dashboard/MaintenanceModule/instructor_maintenance/index.html">Instructor Maintenance</a>
-        </div>
-
-        <div class="card">
-            <a href="http://localhost/dashboard/MaintenanceModule/room_maintenance/index.html">Room Maintenance</a>
-        </div>
-
-        <div class="card">
-            <a href="http://localhost/dashboard/MaintenanceModule/student_maintenance/index.html">Student Maintenance</a>
-        </div>
-
-        <div class="card">
-            <a href="http://localhost/dashboard/MaintenanceModule/section_maintenance/index.html">Section Maintenance</a>
-        </div>
-
-        <div class="card">
-            <a href="http://localhost/dashboard/MaintenanceModule/enrollment_maintenance/index.html">Enrollment Maintenance</a>
-        </div>
-    </main>
-
-    <footer>
-        <p>© 2025 PUP Maintenance System | Developed for Maintenance Module Activity</p>
-    </footer>
+        <main class="main-content">
+            <header style="margin-bottom: 2rem;">
+                <h1>Welcome to the Maintenance Dashboard</h1>
+            </header>
+            
+            <div class="dash-container">
+            </div>
+        </main>
+    </div>
 </body>
 </html>

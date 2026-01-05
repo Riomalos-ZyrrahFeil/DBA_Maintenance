@@ -12,9 +12,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const paginationControlsContainer = document.querySelector('.pagination-controls');
   const paginationInfoContainer = document.querySelector('.pagination-info');
 
+  const modal = document.getElementById("formModal");
+  const addBtn = document.getElementById("addBtn");
+  const closeBtn = document.querySelector(".close-modal");
+  const cancelBtn = document.getElementById("cancelBtn");
   const saveBtn = document.getElementById("saveBtn");
   const updateBtn = document.getElementById("updateBtn");
-  const cancelBtn = document.getElementById("cancelBtn");
+  const modalTitle = document.getElementById("modalTitle");
 
   const courseFormFields = {
     course_id: document.getElementById("course_id"),
@@ -25,6 +29,43 @@ document.addEventListener("DOMContentLoaded", () => {
     units: document.getElementById("units"),
   };
 
+  const openModal = (title = "Add New Course") => {
+      if (!modal) return;
+      modalTitle.innerText = title;
+      modal.style.display = "block";
+      document.body.style.overflow = "hidden";
+  };
+
+  const closeModal = () => {
+      if (!modal) return;
+      modal.style.display = "none";
+      document.body.style.overflow = "auto";
+      clearForm();
+  };
+
+  if (addBtn) {
+      addBtn.onclick = () => {
+          openModal("Add New Course"); 
+          saveBtn.style.display = "inline-block";
+          updateBtn.style.display = "none";
+      };
+  }
+
+  if (closeBtn) closeBtn.onclick = closeModal;
+  if (cancelBtn) cancelBtn.onclick = closeModal;
+
+  window.onclick = (e) => {
+      if (e.target === modal) {
+          closeModal();
+      }
+  };
+
+  window.openEditModal = (courseData) => {
+      openModal("Edit Course");
+      saveBtn.style.display = "none";
+      updateBtn.style.display = "inline-block";
+  };
+
   async function fetchJSON(url) {
     try {
       const res = await fetch(url);
@@ -32,7 +73,6 @@ document.addEventListener("DOMContentLoaded", () => {
       return await res.json();
     } catch (err) {
       console.error(`❌ Fetch error for ${url}:`, err);
-      // Return structured empty response for list fetches
       if (url.includes('get_course.php') && !url.includes('id=')) {
         return { data: [], total_records: 0 };
       }
@@ -64,7 +104,6 @@ document.addEventListener("DOMContentLoaded", () => {
       if (currentPage === 0 && totalRecords > 0) {
         currentPage = 1;
       }
-
 
       if (!Array.isArray(data) || data.length === 0) {
         courseTableBody.innerHTML = `<tr><td colspan="7" class="no-data">No courses found</td></tr>`;
@@ -203,6 +242,8 @@ document.addEventListener("DOMContentLoaded", () => {
             saveBtn.style.display = "none";
             updateBtn.style.display = "inline-block";
             cancelBtn.style.display = "inline-block";
+
+            openModal("Edit Course");
             }
         } catch (err) {
           console.error("Error fetching course for edit:", err);
@@ -250,7 +291,7 @@ document.addEventListener("DOMContentLoaded", () => {
       .then((data) => {
         alert(data.message);
         if (data.status === "success") {
-          clearForm();
+          closeModal();
           currentPage = 1;
           loadCourses();
         }
@@ -275,14 +316,14 @@ document.addEventListener("DOMContentLoaded", () => {
       .then((data) => {
         alert(data.message);
         if (data.status === "success") {
+          closeModal();
           loadCourses(searchInput.value.trim()); 
-          clearForm();
         }
       })
       .catch((err) => console.error("Error:", err));
   });
 
-  cancelBtn.addEventListener("click", clearForm);
+  cancelBtn.addEventListener("click", closeModal);
 
   function clearForm() {
     Object.values(courseFormFields).forEach((field) => (field.value = ""));
