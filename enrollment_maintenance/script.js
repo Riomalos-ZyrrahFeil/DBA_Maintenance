@@ -282,20 +282,50 @@ function toggleSort(column) {
 
 function renderPagination() {
   const pages = Math.ceil(totalRecords / rowsPerPage);
-  const container = document.getElementById('pagination-controls');
+  const controls = document.getElementById('pagination-controls');
   const info = document.getElementById('pagination-info');
-  container.innerHTML = '';
-  info.textContent = totalRecords ? `Showing ${(currentPage - 1) * rowsPerPage + 1} to ${Math.min(currentPage * rowsPerPage, totalRecords)} of ${totalRecords}` : "";
+
+  controls.innerHTML = '';
+  if (totalRecords === 0) {
+    info.textContent = "No records found.";
+    return;
+  }
+
+  const start = (currentPage - 1) * rowsPerPage + 1;
+  const end = Math.min(currentPage * rowsPerPage, totalRecords);
+  info.textContent = `Showing ${start} to ${end} of ${totalRecords} records (Page ${currentPage} of ${pages})`;
+
   if (pages <= 1) return;
-  const btn = (txt, target, disabled, active) => {
-    const b = document.createElement('button');
-    b.textContent = txt; b.disabled = disabled; b.className = 'page-button' + (active ? ' active' : '');
-    b.onclick = () => { currentPage = target; loadEnrollments(document.getElementById('search').value); };
-    container.appendChild(b);
+
+  const createBtn = (text, target, disabled, active = false) => {
+    const btn = document.createElement('button');
+    btn.textContent = text;
+    btn.disabled = disabled;
+    btn.classList.add('page-button');
+    if (active) btn.classList.add('active');
+    
+    btn.onclick = () => { 
+      currentPage = target; 
+      loadEnrollments(document.getElementById('search').value.trim()); 
+    };
+    controls.appendChild(btn);
   };
-  btn('« Prev', currentPage - 1, currentPage === 1);
-  for(let i=1; i<=pages; i++) btn(i, i, i === currentPage, i === currentPage);
-  btn('Next »', currentPage + 1, currentPage === pages);
+
+  createBtn('« Previous', currentPage - 1, currentPage === 1);
+
+  const maxButtons = 5;
+  let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+  let endPage = Math.min(pages, startPage + maxButtons - 1);
+
+  if (endPage - startPage + 1 < maxButtons) {
+    startPage = Math.max(1, endPage - maxButtons + 1);
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    createBtn(i, i, i === currentPage, i === currentPage);
+  }
+
+  createBtn('Next »', currentPage + 1, currentPage === pages);
 }
 
 function updateSortIndicators() {

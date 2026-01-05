@@ -265,7 +265,7 @@ td:last-child {
   margin-left: 5px;
 }
 
-/* --- PAGINATION STYLING --- */
+/* --- PAGINATION COMPONENT --- */
 .pagination-component {
   display: flex;
   justify-content: space-between;
@@ -273,22 +273,48 @@ td:last-child {
   margin-top: 20px;
   padding: 15px 20px;
   border-top: 1px solid #eee;
+  background: #fff;
+}
+
+.pagination-info {
+  color: #666;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.pagination-controls {
+  display: flex;
+  gap: 6px;
 }
 
 .page-button {
-  padding: 8px 12px;
+  padding: 8px 14px;
+  min-width: 40px;
   border: 1px solid #ccc;
   border-radius: 6px;
   background-color: #fff;
   color: var(--primary-maroon);
   cursor: pointer;
   font-weight: 600;
-  margin: 0 2px;
+  transition: all 0.2s ease;
+}
+
+.page-button:hover:not(:disabled) {
+  background-color: #f8f9fa;
+  border-color: var(--primary-maroon);
 }
 
 .page-button.active {
   background-color: var(--primary-maroon);
   color: #fff;
+  border-color: var(--primary-maroon);
+}
+
+.page-button:disabled {
+  cursor: not-allowed;
+  background-color: #f5f5f5;
+  color: #a0a0a0;
+  border-color: #ddd;
 }
 
 .no-data {
