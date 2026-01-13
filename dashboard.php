@@ -9,6 +9,7 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_role = $_SESSION['role'] ?? 'student';
 $ref_id = $_SESSION['ref_id'] ?? 0;
+$display_name = "";
 
 if ($user_role === 'student') {
   $stmt = $conn->prepare("SELECT COUNT(*) FROM tbl_enrollment WHERE student_id = ? AND is_deleted = 0");
@@ -19,8 +20,22 @@ if ($user_role === 'student') {
   $stmt = $conn->prepare("SELECT student_name FROM tbl_student WHERE student_id = ?");
   $stmt->bind_param("i", $ref_id);
   $stmt->execute();
-  $student_name = $stmt->get_result()->fetch_assoc()['student_name'] ?? 'Student';
-} else {
+  $display_name = $stmt->get_result()->fetch_assoc()['student_name'] ?? 'Student';
+} 
+else if ($user_role === 'faculty') {
+  $stmt = $conn->prepare("SELECT CONCAT(first_name, ' ', last_name) AS full_name FROM tbl_instructor WHERE instructor_id = ?");
+  $stmt->bind_param("i", $ref_id);
+  $stmt->execute();
+  $result = $stmt->get_result();
+  
+  $row = $result->fetch_assoc();
+  $display_name = $row['full_name'] ?? 'Faculty Member';
+} 
+else {
+  $display_name = 'System Administrator';
+}
+
+if ($user_role !== 'student') {
   $total_students = $conn->query("SELECT COUNT(*) FROM tbl_student WHERE is_deleted = 0")->fetch_row()[0];
   $total_enrollments = $conn->query("SELECT COUNT(*) FROM tbl_enrollment WHERE is_deleted = 0")->fetch_row()[0];
   $total_sections = $conn->query("SELECT COUNT(*) FROM tbl_section WHERE is_deleted = 0")->fetch_row()[0];
@@ -38,9 +53,9 @@ if ($user_role === 'student') {
     <?php include('component/sidebar.php'); ?>
 
     <main class="main-content">
-      <header style="margin-bottom: 2.5rem;">
-          <h1>Welcome, <?php echo ($user_role === 'student') ? $student_name : 'System Administrator'; ?></h1>
-          <p>Logged in as: <span style="color: var(--primary-maroon); font-weight: 600;"><?php echo ucwords(str_replace('_', ' ', $user_role)); ?></span></p>
+      <header style="margin-bottom: 2rem;">
+          <h1>Welcome, <?php echo $display_name; ?></h1>
+          <p>Role: <strong><?php echo ucwords(str_replace('_', ' ', $user_role)); ?></strong></p>
       </header>
       
       <div class="stat-grid">
