@@ -17,13 +17,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         
         if ($user['role'] !== $selected_role && !$is_super_admin_as_faculty) {
             echo "<script>
-                    alert('This email is registered as a " . $user['role'] . ", not " . $selected_role . ".');
+                    alert('This account is registered as a " . ucwords(str_replace('_', ' ', $user['role'])) . ", not " . $selected_role . ".');
                     window.location.href = '../../index.php';
                   </script>";
             exit();
         }
 
-        if ($password === $user['password']) {
+        if (password_verify($password, $user['password'])) {
             $_SESSION['user_id'] = $user['user_id'];
             $_SESSION['role'] = $user['role'];
             $_SESSION['ref_id'] = $user['reference_id'];

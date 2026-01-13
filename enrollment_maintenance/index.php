@@ -153,7 +153,6 @@ $user_role = $_SESSION['role'];
     </main>
   </div>
   <script>
-    // Pass PHP session data to JavaScript
     window.PHP_VARS = {
         userRole: "<?php echo $_SESSION['role']; ?>",
         studentId: "<?php echo $_SESSION['student_id'] ?? 0; ?>"

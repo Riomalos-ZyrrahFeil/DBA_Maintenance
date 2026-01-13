@@ -1,6 +1,3 @@
-/**
- * 1. GLOBAL STATE & CONFIGURATION
- */
 let enrollmentList = [];
 let currentSort = { column: "enrollment_id", direction: "desc" };
 let currentPage = 1;
@@ -9,13 +6,9 @@ let totalRecords = 0;
 let allSections = [];
 let allStudents = {};
 
-// Identify Role from PHP Session
 const userRole = "<?php echo $_SESSION['role']; ?>";
 const studentSessionId = "<?php echo $_SESSION['student_id'] ?? 0; ?>";
 
-/**
- * 2. CORE DATA HANDLERS (HOISTED)
- */
 async function fetchJSON(url, options = {}) {
   try {
     const res = await fetch(url, options);
@@ -51,9 +44,6 @@ async function updateEnrollment() {
   else alert(resp.message);
 }
 
-/**
- * 3. UI INITIALIZATION & EVENT LISTENERS
- */
 document.addEventListener("DOMContentLoaded", () => {
   const modal = document.getElementById('enrollmentModal');
   const exportModal = document.getElementById('exportModal');
@@ -69,6 +59,12 @@ document.addEventListener("DOMContentLoaded", () => {
   if (userRole === 'student') {
     document.getElementById('openModalBtn').style.display = 'none';
   }
+
+  document.getElementById('openModalBtn').onclick = () => {
+      document.getElementById('modalTitle').innerText = "Add New Enrollment";
+      modal.style.display = 'block';
+      document.body.style.overflow = 'hidden';
+  };
 
   document.getElementById('saveBtn').onclick = saveEnrollment;
   document.getElementById('updateBtn').onclick = updateEnrollment;
@@ -136,42 +132,6 @@ document.addEventListener("DOMContentLoaded", () => {
   window.openCourseDetailsModal = openCourseDetailsModal;
 });
 
-/**
- * 4. SUPPORTING LOGIC FUNCTIONS
- */
-async function loadEnrollments(query = "") {
-  const url = `php/get_enrollment.php?search=${encodeURIComponent(query)}&sort_by=${currentSort.column}&order=${currentSort.direction}&page=${currentPage}&limit=${rowsPerPage}`;
-  const response = await fetchJSON(url);
-  const data = response.data || [];
-  totalRecords = response.total_records || 0;
-
-  const tbody = document.querySelector('#enrollmentTable tbody');
-  tbody.innerHTML = data.length ? "" : '<tr><td colspan="7" class="no-data">No enrollments found</td></tr>';
-
-  const isAdminOrFaculty = (userRole === 'super_admin' || userRole === 'faculty');
-
-  data.forEach(e => {
-    tbody.innerHTML += `
-      <tr>
-        <td>${e.enrollment_id}</td>
-        <td>${e.student_name}</td>
-        <td>${e.section_code}</td>
-        <td>${e.enrollment_type}</td>
-        <td>${e.date_enrolled}</td>
-        <td>${e.status}</td>
-        <td class="actions-cell">
-          <button class="action-btn show-courses-btn" onclick="openCourseDetailsModal(${e.student_id})">Courses</button>
-          ${isAdminOrFaculty ? `
-            <button class="action-btn edit-btn" onclick="editEnrollment(${e.enrollment_id})">Edit</button>
-            <button class="action-btn delete-btn" onclick="deleteEnrollment(${e.enrollment_id})">Delete</button>
-          ` : ''}
-        </td>
-      </tr>`;
-  });
-  renderPagination();
-  updateSortIndicators();
-}
-
 async function loadStudents() {
   const data = await fetchJSON('php/fetch_students.php');
   const select = document.getElementById('student_id');
@@ -190,26 +150,42 @@ async function loadSections() {
 }
 
 function updateSectionDropdown() {
-  const type = document.getElementById('enrollment_type').value;
-  const studentId = document.getElementById('student_id').value;
-  const sectionSelect = document.getElementById('section_id');
-  sectionSelect.innerHTML = '<option value="">Select Section</option>';
-  if (!studentId) { sectionSelect.disabled = true; return; }
+    const type = document.getElementById('enrollment_type').value;
+    const studentId = document.getElementById('student_id').value;
+    const sectionSelect = document.getElementById('section_id');
+    
+    if (!studentId) {
+        sectionSelect.innerHTML = '<option value="">Select Student First</option>';
+        sectionSelect.disabled = true;
+        return;
+    }
 
-  const student = allStudents[studentId];
-  sectionSelect.disabled = false;
+    const student = allStudents[studentId];
+    sectionSelect.disabled = false;
 
-  let filtered = (type === 'Regular' && student) 
-    ? allSections.filter(sec => {
+    const isIrregular = (student.status === 'Irregular' || type === 'Irregular');
+
+    let filtered = [];
+
+    if (!isIrregular) {
         const [yr, sem] = student.year_level.split('-');
-        const target = `${student.program_code.replace(/-TG$/, '')}-${yr}-${sem}-TG`;
-        return sec.section_code === target;
-      })
-    : allSections;
+        const programBase = student.program_code.split('-')[0];
+        const targetSection = `${programBase}-${yr}-${sem}-TG`;
+        
+        filtered = allSections.filter(sec => sec.section_code === targetSection);
+        
+        if (filtered.length === 0) {
+            console.warn("No block section found for: " + targetSection);
+        }
+    } else {
+        const programBase = student.program_code.split('-')[0];
+        filtered = allSections.filter(sec => sec.section_code.startsWith(programBase));
+    }
 
-  filtered.forEach(sec => {
-    sectionSelect.innerHTML += `<option value="${sec.section_id}">${sec.section_code} - ${sec.display_text || sec.year}</option>`;
-  });
+    sectionSelect.innerHTML = filtered.length ? '<option value="">Select Section</option>' : '<option value="">No Sections Available</option>';
+    filtered.forEach(sec => {
+        sectionSelect.innerHTML += `<option value="${sec.section_id}">${sec.section_code} (${sec.display_text || 'Generic'})</option>`;
+    });
 }
 
 async function loadEnrollments(query = "") {
@@ -220,6 +196,9 @@ async function loadEnrollments(query = "") {
 
   const tbody = document.querySelector('#enrollmentTable tbody');
   tbody.innerHTML = data.length ? "" : '<tr><td colspan="7" class="no-data">No enrollments found</td></tr>';
+
+  const role = window.PHP_VARS.userRole; 
+  const isAdminOrFaculty = (role === 'super_admin' || role === 'faculty');
 
   data.forEach(e => {
     tbody.innerHTML += `
@@ -232,8 +211,10 @@ async function loadEnrollments(query = "") {
         <td>${e.status}</td>
         <td class="actions-cell">
           <button class="action-btn show-courses-btn" onclick="openCourseDetailsModal(${e.student_id})">Courses</button>
-          <button class="action-btn edit-btn" onclick="editEnrollment(${e.enrollment_id})">Edit</button>
-          <button class="action-btn delete-btn" onclick="deleteEnrollment(${e.enrollment_id})">Delete</button>
+          ${isAdminOrFaculty ? `
+            <button class="action-btn edit-btn" onclick="editEnrollment(${e.enrollment_id})">Edit</button>
+            <button class="action-btn delete-btn" onclick="deleteEnrollment(${e.enrollment_id})">Delete</button>
+          ` : ''}
         </td>
       </tr>`;
   });
